@@ -35,6 +35,6 @@ jobs:
             -Dsonar.projectKey=andreevich404_Chat \
             -Dsonar.organization=ivan-andreevich \
             -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.java.binaries=${{ inputs.binaries-path }} \
+            -Dsonar.java.binaries=chat-server/target/classes,chat-client/target/classes \
             -Dsonar.token=${{ secrets.SONAR_TOKEN }}
         shell: bash
