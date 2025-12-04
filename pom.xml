@@ -16,8 +16,6 @@
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
         <sonar.projectKey>andreevich404_Chat</sonar.projectKey>
         <sonar.organization>ivan-andreevich</sonar.organization>
-        <sonar.java.binaries>chat-server/target/classes,chat-client/target/classes</sonar.java.binaries>
-        <sonar.java.sources>chat-server/src/main/java,chat-client/src/main/java</sonar.java.sources>
         <sonar.coverage.exclusions>**/*</sonar.coverage.exclusions>
         <sonar.qualitygate.wait>true</sonar.qualitygate.wait>
     </properties>
