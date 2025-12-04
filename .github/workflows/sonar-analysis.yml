@@ -29,9 +29,15 @@ jobs:
         run: mvn clean install -DskipTests
         shell: bash
 
+      - name: Check if target/classes exists
+        run: |
+          ls -R chat-server/target/classes
+          ls -R chat-client/target/classes
+        shell: bash
+
       - name: Run SonarQube analysis
         run: |
-          mvn clean verify compile sonar:sonar \
+          mvn sonar:sonar \
             -Dsonar.projectKey=andreevich404_Chat \
             -Dsonar.organization=ivan-andreevich \
             -Dsonar.host.url=https://sonarcloud.io \
