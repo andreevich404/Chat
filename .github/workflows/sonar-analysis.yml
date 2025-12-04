@@ -16,32 +16,11 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '21'
+          cache: 'maven'
 
-      - name: Cache Maven dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: |
-            ${{ runner.os }}-maven-
-
-      - name: Build with Maven (skip tests)
-        run: mvn clean install -DskipTests
-        shell: bash
-
-      - name: Show current working directory
-        run: pwd
-
-      - name: Check if target/classes exists
+      - name: Build and analyze with Maven
         run: |
-          ls -R chat-server/target/classes
-          ls -R chat-client/target/classes
-        shell: bash
-
-      - name: Run SonarQube analysis
-        run: |
-          mvn clean install -DskipTests
-          mvn sonar:sonar \
+          mvn clean verify sonar:sonar \
             -Dsonar.projectKey=andreevich404_Chat \
             -Dsonar.organization=ivan-andreevich \
             -Dsonar.host.url=https://sonarcloud.io \
