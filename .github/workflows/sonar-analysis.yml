@@ -31,7 +31,7 @@ jobs:
 
       - name: Run SonarQube analysis
         run: |
-          mvn sonar:sonar \
+          mvn clean verify sonar:sonar \
             -Dsonar.projectKey=andreevich404_Chat \
             -Dsonar.organization=ivan-andreevich \
             -Dsonar.host.url=https://sonarcloud.io \
