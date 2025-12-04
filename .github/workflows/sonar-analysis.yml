@@ -40,7 +40,8 @@ jobs:
 
       - name: Run SonarQube analysis
         run: |
-          mvn clean install -DskipTests \
+          mvn clean install -DskipTests
+          mvn sonar:sonar \
             -Dsonar.projectKey=andreevich404_Chat \
             -Dsonar.organization=ivan-andreevich \
             -Dsonar.host.url=https://sonarcloud.io \
