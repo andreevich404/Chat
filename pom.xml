@@ -13,13 +13,14 @@
     </modules>
 
     <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
         <sonar.projectKey>andreevich404_Chat</sonar.projectKey>
         <sonar.organization>ivan-andreevich</sonar.organization>
         <sonar.coverage.exclusions>**/*</sonar.coverage.exclusions>
         <sonar.qualitygate.wait>true</sonar.qualitygate.wait>
-        <sonar.sources>chat-server/src,chat-client/src</sonar.sources>
-        <sonar.java.binaries>chat-server/target/classes,chat-client/target/classes</sonar.java.binaries>
     </properties>
 
     <dependencyManagement>
