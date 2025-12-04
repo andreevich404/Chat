@@ -18,6 +18,8 @@
         <sonar.organization>ivan-andreevich</sonar.organization>
         <sonar.coverage.exclusions>**/*</sonar.coverage.exclusions>
         <sonar.qualitygate.wait>true</sonar.qualitygate.wait>
+        <sonar.sources>chat-server/src,chat-client/src</sonar.sources>
+        <sonar.java.binaries>chat-server/target/classes,chat-client/target/classes</sonar.java.binaries>
     </properties>
 
     <dependencyManagement>

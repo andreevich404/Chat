@@ -20,10 +20,14 @@ jobs:
 
       - name: Build and analyze with Maven
         run: |
-          mvn clean verify sonar:sonar \
+          mvn clean verify \
+            -DskipTests=false \
             -Dsonar.projectKey=andreevich404_Chat \
             -Dsonar.organization=ivan-andreevich \
             -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.java.binaries=./chat-server/target/classes,./chat-client/target/classes \
-            -Dsonar.token=${{ secrets.SONAR_TOKEN }}
+            -Dsonar.token=${{ secrets.SONAR_TOKEN }} \
+            -Dsonar.sources=chat-server/src,chat-client/src \
+            -Dsonar.java.binaries=chat-server/target/classes,chat-client/target/classes \
+            -Dsonar.java.libraries=chat-server/target/*.jar,chat-client/target/*.jar \
+            sonar:sonar
         shell: bash
