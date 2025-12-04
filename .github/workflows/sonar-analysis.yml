@@ -25,7 +25,7 @@ jobs:
             -Dsonar.projectKey=andreevich404_Chat \
             -Dsonar.organization=ivan-andreevich \
             -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.cpd.enabled=false
+            -Dsonar.cpd.exclusions=chat-client/src/**, chat-server/src/** \
         shell: bash
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
