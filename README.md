@@ -14,9 +14,44 @@
 
 
 ## Структура проекта
+- **[chat-client/](https://github.com/andreevich404/Chat/tree/develop/chat-client)** - Клиентская часть приложения.
+- **[chat-server/](https://github.com/andreevich404/Chat/tree/develop/chat-server)** - Серверная часть приложения.
 
-- **`server/`** - Серверная часть приложения.
-- **`client/`** - Клиентская часть приложения.
+## ER-диаграмма
+```mermaid
+erDiagram
+    users {
+        BIGINT id PK
+        VARCHAR username
+        VARCHAR password_hash
+        TIMESTAMP created_at
+    }
+
+    chat_rooms {
+        BIGINT id PK
+        VARCHAR name
+        TIMESTAMP created_at
+    }
+
+    user_chat_rooms {
+        BIGINT user_id FK
+        BIGINT chat_room_id FK
+        TIMESTAMP joined_at
+    }
+
+    messages {
+        BIGINT id PK
+        BIGINT chat_room_id FK
+        BIGINT sender_id FK
+        VARCHAR content
+        TIMESTAMP sent_at
+    }
+
+    users ||--o{ user_chat_rooms : "membership"
+    chat_rooms ||--o{ user_chat_rooms : "members"
+    chat_rooms ||--o{ messages : "contains"
+    users ||--o{ messages : "sends"
+```
 
 ## Установка
 
