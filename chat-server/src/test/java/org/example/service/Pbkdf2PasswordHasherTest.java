@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * <p>Тесты не проверяют производительность, но гарантируют корректность
  * криптографической логики PBKDF2 в рамках функционального поведения.</p>
  */
-public class Pbkdf2PasswordHasherTest {
+class Pbkdf2PasswordHasherTest {
     private final PasswordHasher hasher = new Pbkdf2PasswordHasher();
 
     /**
