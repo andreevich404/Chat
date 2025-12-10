@@ -15,8 +15,7 @@ public final class TestConfigLoader {
     private TestConfigLoader() {}
 
     public static void setProperty(String key, String value) {
-        if (value == null) properties.remove(key);
-        else properties.put(key, value);
+        properties.put(key, value);
 
         // Имитация ConfigLoaderService.getString()
         ConfigLoaderService.setTestOverrideProperties(properties);
