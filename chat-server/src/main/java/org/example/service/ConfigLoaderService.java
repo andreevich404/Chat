@@ -33,7 +33,10 @@ public class ConfigLoaderService {
     private static final Logger logger = LoggerFactory.getLogger(ConfigLoaderService.class);
 
     private static final Properties properties = new Properties();
-    private static final Dotenv dotenv = Dotenv.load();
+    private static final Dotenv dotenv = Dotenv
+            .configure()
+            .ignoreIfMissing()
+            .load();
 
     // Тестовые подмены конфигураций — используются только при тестировании
     private static Map<String, String> testOverrideProps = null;
