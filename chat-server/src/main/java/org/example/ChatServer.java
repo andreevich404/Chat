@@ -3,12 +3,7 @@ package org.example;
 import org.example.model.PasswordHasher;
 import org.example.repository.JdbcUserRepository;
 import org.example.repository.UserRepository;
-import org.example.service.AuthService;
-import org.example.service.ConfigLoaderService;
-import org.example.service.ConnectionFactoryService;
-import org.example.service.DatabaseInitService;
-import org.example.service.DevUserSeederService;
-import org.example.service.Pbkdf2PasswordHasher;
+import org.example.service.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,8 +65,13 @@ public class ChatServer {
             DatabaseInitService initService = new DatabaseInitService(connectionFactory);
 
             if ("dev".equalsIgnoreCase(env)) {
-                DevUserSeederService devSeeder = new DevUserSeederService(authService, userRepository);
-                initService.setDevUserSeeder(devSeeder);
+
+                DevUserSeederService devUserSeeder = new DevUserSeederService(authService, userRepository);
+
+                DevMessageSeederService devMessageSeeder = new DevMessageSeederService(connectionFactory);
+
+                initService.setDevUserSeeder(devUserSeeder);
+                initService.setDevMessageSeeder(devMessageSeeder);
             }
 
             initService.init();
