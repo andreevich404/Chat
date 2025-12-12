@@ -1,5 +1,6 @@
 package org.example.service;
 
+import org.example.model.PasswordHasher;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 /**
