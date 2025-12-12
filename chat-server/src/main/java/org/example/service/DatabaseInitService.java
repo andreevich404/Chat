@@ -34,7 +34,8 @@ public class DatabaseInitService {
     private final String initMode;
     private final boolean devMode;
 
-    private DevUserSeederService devUserSeeder; // optional, only for dev
+    private DevUserSeederService devUserSeeder;
+    private DevMessageSeederService devMessageSeeder;
 
     public DatabaseInitService(ConnectionFactoryService connectionFactory) {
         this.connectionFactory = connectionFactory;
@@ -56,6 +57,10 @@ public class DatabaseInitService {
         this.devUserSeeder = devUserSeeder;
     }
 
+    public void setDevMessageSeeder(DevMessageSeederService devMessageSeeder) {
+        this.devMessageSeeder = devMessageSeeder;
+    }
+
     /**
      * Выполняет инициализацию БД согласно конфигурации.
      */
@@ -70,8 +75,13 @@ public class DatabaseInitService {
                 throw new IllegalStateException("Неизвестное значение db.init.mode: " + initMode);
         }
 
-        if (devMode && devUserSeeder != null) {
-            devUserSeeder.seed();
+        if (devMode) {
+            if (devUserSeeder != null) {
+                devUserSeeder.seed();
+            }
+            if (devMessageSeeder != null) {
+                devMessageSeeder.seed();
+            }
         }
     }
 
