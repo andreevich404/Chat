@@ -50,11 +50,8 @@ public final class TestConfigLoader {
      * @param value значение свойства или {@code null} для удаления
      */
     public static void setProperty(String key, String value) {
-        if (value == null) {
-            properties.remove(key);
-        } else {
-            properties.put(key, value);
-        }
+        if (value == null) properties.remove(key);
+        else properties.put(key, value);
 
         ConfigLoaderService.setTestOverrideProperties(properties);
     }
