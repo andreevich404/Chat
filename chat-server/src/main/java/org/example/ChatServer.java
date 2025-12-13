@@ -3,7 +3,14 @@ package org.example;
 import org.example.model.PasswordHasher;
 import org.example.repository.JdbcUserRepository;
 import org.example.repository.UserRepository;
-import org.example.service.*;
+import org.example.service.AuthService;
+import org.example.service.ConfigLoaderService;
+import org.example.service.ConnectionFactoryService;
+import org.example.service.ConnectionHandler;
+import org.example.service.DatabaseInitService;
+import org.example.service.DevMessageSeederService;
+import org.example.service.DevUserSeederService;
+import org.example.service.Pbkdf2PasswordHasher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,24 +28,16 @@ import java.util.concurrent.atomic.AtomicLong;
 public class ChatServer {
 
     private static final Logger log = LoggerFactory.getLogger(ChatServer.class);
-
     private static final AtomicLong CLIENT_SEQ = new AtomicLong(1);
 
     public static void main(String[] args) {
-
         String host = ConfigLoaderService.getString("server.host");
         int port = ConfigLoaderService.getInt("server.port");
         String env = ConfigLoaderService.getString("app.env");
 
-        if (host == null || host.isBlank()) {
-            host = "localhost";
-        }
-        if (port <= 0) {
-            port = 8080;
-        }
-        if (env == null || env.isBlank()) {
-            env = "prod";
-        }
+        if (host == null || host.isBlank()) host = "localhost";
+        if (port <= 0) port = 8080;
+        if (env == null || env.isBlank()) env = "prod";
 
         log.info("Запуск сервера чата... окружение={} адрес={}{}", env, host, ":" + port);
 
@@ -57,26 +56,19 @@ public class ChatServer {
         }
         log.info("Тест соединения с БД успешен");
 
+        UserRepository userRepository = new JdbcUserRepository(connectionFactory);
+        PasswordHasher passwordHasher = new Pbkdf2PasswordHasher();
+        AuthService authService = new AuthService(userRepository, passwordHasher);
         try {
-            UserRepository userRepository = new JdbcUserRepository(connectionFactory);
-            PasswordHasher passwordHasher = new Pbkdf2PasswordHasher();
-            AuthService authService = new AuthService(userRepository, passwordHasher);
-
             DatabaseInitService initService = new DatabaseInitService(connectionFactory);
 
             if ("dev".equalsIgnoreCase(env)) {
-
-                DevUserSeederService devUserSeeder = new DevUserSeederService(authService, userRepository);
-
-                DevMessageSeederService devMessageSeeder = new DevMessageSeederService(connectionFactory);
-
-                initService.setDevUserSeeder(devUserSeeder);
-                initService.setDevMessageSeeder(devMessageSeeder);
+                initService.setDevUserSeeder(new DevUserSeederService(authService, userRepository));
+                initService.setDevMessageSeeder(new DevMessageSeederService(connectionFactory));
             }
 
             initService.init();
             log.info("Инициализация БД завершена (режим={})", ConfigLoaderService.getString("db.init.mode"));
-
         }
         catch (Exception e) {
             log.error("Ошибка инициализации БД. Запуск сервера отменен.", e);
@@ -86,7 +78,6 @@ public class ChatServer {
         ExecutorService clientPool = Executors.newCachedThreadPool();
 
         try (ServerSocket serverSocket = new ServerSocket(port, 50, InetAddress.getByName(host))) {
-
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                 log.info("Триггер Shutdown сработал. Остановка сервера...");
                 clientPool.shutdownNow();
@@ -102,13 +93,11 @@ public class ChatServer {
             while (!serverSocket.isClosed()) {
                 try {
                     Socket clientSocket = serverSocket.accept();
-
                     long clientId = CLIENT_SEQ.getAndIncrement();
 
                     log.info("Клиент подключен: id={} remote={}", clientId, clientSocket.getRemoteSocketAddress());
 
-                    clientPool.submit(new ConnectionHandler(clientId, clientSocket));
-
+                    clientPool.submit(new ConnectionHandler(clientId, clientSocket, authService));
                 }
                 catch (IOException e) {
                     if (serverSocket.isClosed()) {
@@ -116,7 +105,6 @@ public class ChatServer {
                         break;
                     }
                     log.error("Ошибка при приеме клиентского подключения", e);
-
                 }
                 catch (RuntimeException e) {
                     log.error("Неожиданная ошибка в цикле приема подключений", e);
