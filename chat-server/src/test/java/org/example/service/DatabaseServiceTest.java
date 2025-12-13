@@ -50,7 +50,7 @@ class DatabaseServiceTest {
      */
     @Test
     void loadShouldThrowIfJdbcUrlMissing() {
-        TestConfigLoader.setProperty("jdbcUrl", null);
+        TestConfigLoader.setProperty("jdbcUrl", "");
 
         assertThrows(IllegalStateException.class, DatabaseService::load);
     }
