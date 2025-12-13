@@ -2,6 +2,7 @@ package org.example.util;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonParseException;
 
 import java.time.LocalDateTime;
 
@@ -31,14 +32,21 @@ public final class JsonUtil {
      * <p>Содержит пользовательский сериализатор для {@link LocalDateTime}.</p>
      */
     private static final Gson GSON = new GsonBuilder()
-            .registerTypeAdapter(
-                    LocalDateTime.class,
-                    (com.google.gson.JsonSerializer<LocalDateTime>)
-                            (src, typeOfSrc, context) ->
-                                    src == null
-                                            ? null
-                                            : new com.google.gson.JsonPrimitive(src.toString())
-            )
+            .registerTypeAdapter(LocalDateTime.class,
+                    (com.google.gson.JsonSerializer<LocalDateTime>) (src, typeOfSrc, context) ->
+                            src == null ? null : new com.google.gson.JsonPrimitive(src.toString()))
+            .registerTypeAdapter(LocalDateTime.class,
+                    (com.google.gson.JsonDeserializer<LocalDateTime>) (json, typeOfT, context) -> {
+                        if (json == null || json.isJsonNull()) {
+                            return null;
+                        }
+                        try {
+                            return LocalDateTime.parse(json.getAsString());
+                        }
+                        catch (RuntimeException e) {
+                            throw new JsonParseException("Неверный формат LocalDateTime: " + json, e);
+                        }
+                    })
             .create();
 
     /**
