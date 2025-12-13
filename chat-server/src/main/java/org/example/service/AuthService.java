@@ -94,13 +94,13 @@ public class AuthService {
      */
     public ApiResponse<AuthResponse> register(String username, String password) {
         if (isBlank(username) || isBlank(password)) {
-            log.warn("Register validation failed: username or password is blank");
+            log.warn("Регистрация отклонена: username или password пустые");
             return ApiResponse.fail("VALIDATION_ERROR", "username и password обязательны");
         }
 
         try {
             if (userRepository.existsByUsername(username)) {
-                log.warn("Register rejected: user already exists, username={}", username);
+                log.warn("Регистрация отклонена: пользователь уже существует, username={}", username);
                 return ApiResponse.fail("USER_EXISTS", "Пользователь уже существует");
             }
 
@@ -111,13 +111,14 @@ public class AuthService {
 
             userRepository.save(user);
 
-            log.info("User registered successfully: username={}", username);
+            log.info("Пользователь зарегистрирован успешно: username={}", username);
             return ApiResponse.ok(new AuthResponse(username));
-
-        } catch (DatabaseException e) {
+        }
+        catch (DatabaseException e) {
             return ApiResponse.fail("DATABASE_ERROR", "Ошибка базы данных");
-        } catch (RuntimeException e) {
-            log.error("Unexpected error during register, username={}", username, e);
+        }
+        catch (RuntimeException e) {
+            log.error("Неожиданная ошибка при регистрации, username={}", username, e);
             return ApiResponse.fail("INTERNAL_ERROR", "Внутренняя ошибка сервера");
         }
     }
@@ -147,7 +148,7 @@ public class AuthService {
      */
     public ApiResponse<AuthResponse> login(String username, String password) {
         if (isBlank(username) || isBlank(password)) {
-            log.warn("Login validation failed: username or password is blank");
+            log.warn("Вход отклонен: username или password пустые");
             return ApiResponse.fail("VALIDATION_ERROR", "username и password обязательны");
         }
 
@@ -155,24 +156,26 @@ public class AuthService {
             Optional<User> userOpt = userRepository.findByUsername(username);
 
             if (userOpt.isEmpty()) {
-                log.warn("Login rejected: user not found, username={}", username);
+                log.warn("Вход отклонен: пользователь не найден, username={}", username);
                 return ApiResponse.fail("USER_NOT_FOUND", "Пользователь не найден");
             }
 
             User user = userOpt.get();
 
             if (!passwordHasher.verify(password, user.getPasswordHash())) {
-                log.warn("Login rejected: invalid password, username={}", username);
+                log.warn("Вход отклонен: неверный пароль, username={}", username);
                 return ApiResponse.fail("INVALID_PASSWORD", "Неверный пароль");
             }
 
-            log.info("User logged in successfully: username={}", username);
+            log.info("Пользователь вошел успешно: username={}", username);
             return ApiResponse.ok(new AuthResponse(user.getUsername()));
 
-        } catch (DatabaseException e) {
+        }
+        catch (DatabaseException e) {
             return ApiResponse.fail("DATABASE_ERROR", "Ошибка базы данных");
-        } catch (RuntimeException e) {
-            log.error("Unexpected error during login, username={}", username, e);
+        }
+        catch (RuntimeException e) {
+            log.error("Неожиданная ошибка во время входа, username={}", username, e);
             return ApiResponse.fail("INTERNAL_ERROR", "Внутренняя ошибка сервера");
         }
     }
