@@ -22,6 +22,15 @@ public class ConnectionHandler implements Runnable {
 
     private static final int MAX_MESSAGE_LENGTH = 1000;
 
+    private static final String CODE_VALIDATION_ERROR = "VALIDATION_ERROR";
+    private static final String CODE_INVALID_REQUEST = "INVALID_REQUEST";
+
+    private static final String TYPE_AUTH_REQUEST = "AUTH_REQUEST";
+    private static final String TYPE_CHAT_MESSAGE = "CHAT_MESSAGE";
+    private static final String TYPE_AUTH_RESPONSE = "AUTH_RESPONSE";
+    private static final String TYPE_ERROR = "ERROR";
+    private static final String TYPE_USER_PRESENCE = "USER_PRESENCE";
+
     private final long clientId;
     private final Socket socket;
     private final AuthService authService;
@@ -63,6 +72,7 @@ public class ConnectionHandler implements Runnable {
                 }
                 handleIncoming(json, out);
             }
+
             log.info("Клиент отключился: id={} remote={}", clientId, remote);
         }
         catch (IOException e) {
@@ -77,11 +87,11 @@ public class ConnectionHandler implements Runnable {
 
             if (username != null && !username.isBlank()) {
                 int online = broadcastService.getOnlineCount();
-                broadcastService.broadcast(ServerEvent.of(
-                        "USER_PRESENCE",
+                broadcastService.broadcast(ServerEvent.of(TYPE_USER_PRESENCE,
                         new UserPresenceEvent("userLeft", username, online)
                 ));
             }
+
             closeQuietly();
             log.info("Обработчик остановлен: id={} remote={}", clientId, remote);
         }
@@ -100,13 +110,13 @@ public class ConnectionHandler implements Runnable {
         }
 
         if (event == null || event.getType() == null || event.getType().isBlank()) {
-            send(out, ServerEvent.error("INVALID_REQUEST", "Отсутствует поле type"));
+            send(out, ServerEvent.error(CODE_INVALID_REQUEST, "Отсутствует поле type"));
             return;
         }
 
         switch (event.getType()) {
-            case "AUTH_REQUEST" -> handleAuthRequest(event, out);
-            case "CHAT_MESSAGE" -> handleChatMessage(event, out);
+            case TYPE_AUTH_REQUEST -> handleAuthRequest(event, out);
+            case TYPE_CHAT_MESSAGE -> handleChatMessage(event, out);
             default -> send(out, ServerEvent.error("UNKNOWN_TYPE", "Неизвестный тип сообщения: " + event.getType()));
         }
     }
@@ -118,18 +128,18 @@ public class ConnectionHandler implements Runnable {
             req = JsonUtil.fromJson(JsonUtil.toJson(event.getData()), AuthRequest.class);
         }
         catch (RuntimeException e) {
-            send(out, ServerEvent.error("INVALID_REQUEST", "Поле data имеет неверный формат"));
+            send(out, ServerEvent.error(CODE_INVALID_REQUEST, "Поле data имеет неверный формат"));
             return;
         }
 
         if (req == null) {
-            send(out, ServerEvent.error("INVALID_REQUEST", "Поле data обязательно"));
+            send(out, ServerEvent.error(CODE_INVALID_REQUEST, "Поле data обязательно"));
             return;
         }
 
         String action = req.getAction();
         if (action == null || action.isBlank()) {
-            send(out, ServerEvent.error("VALIDATION_ERROR", "Поле action обязательно (LOGIN|REGISTER)"));
+            send(out, ServerEvent.error(CODE_VALIDATION_ERROR, "Поле action обязательно (LOGIN|REGISTER)"));
             return;
         }
 
@@ -149,21 +159,20 @@ public class ConnectionHandler implements Runnable {
 
             broadcastService.bindUsername(clientId, this.username);
 
-            send(out, ServerEvent.of("AUTH_RESPONSE", auth));
+            send(out, ServerEvent.of(TYPE_AUTH_RESPONSE, auth));
 
             int online = broadcastService.getOnlineCount();
             broadcastService.broadcast(ServerEvent.of(
-                    "USER_PRESENCE",
+                    TYPE_USER_PRESENCE,
                     new UserPresenceEvent("userJoined", this.username, online)
             ));
-
         }
         else {
-            send(out, ServerEvent.of("ERROR", response.getError()));
+            send(out, ServerEvent.of(TYPE_ERROR, response.getError()));
         }
     }
 
-        private void handleChatMessage(ServerEvent event, BufferedWriter out) throws IOException {
+    private void handleChatMessage(ServerEvent event, BufferedWriter out) throws IOException {
 
         if (username == null || username.isBlank()) {
             send(out, ServerEvent.error("UNAUTHORIZED", "Сначала выполните вход"));
@@ -173,33 +182,31 @@ public class ConnectionHandler implements Runnable {
         final ChatMessage msg;
         try {
             msg = JsonUtil.fromJson(JsonUtil.toJson(event.getData()), ChatMessage.class);
-        } catch (RuntimeException e) {
-            send(out, ServerEvent.error("INVALID_REQUEST", "Поле data имеет неверный формат"));
+        }
+        catch (RuntimeException e) {
+            send(out, ServerEvent.error(CODE_INVALID_REQUEST, "Поле data имеет неверный формат"));
             return;
         }
 
         if (msg == null) {
-            send(out, ServerEvent.error("INVALID_REQUEST", "Поле data обязательно"));
+            send(out, ServerEvent.error(CODE_INVALID_REQUEST, "Поле data обязательно"));
             return;
         }
 
         String content = msg.getContent();
         if (content == null || content.isBlank()) {
-            send(out, ServerEvent.error("VALIDATION_ERROR", "content не должен быть пустым"));
+            send(out, ServerEvent.error(CODE_VALIDATION_ERROR, "content не должен быть пустым"));
             return;
         }
 
         String normalizedContent = content.trim();
         if (normalizedContent.length() > MAX_MESSAGE_LENGTH) {
-            send(out, ServerEvent.error(
-                    "VALIDATION_ERROR",
-                    "content превышает максимальную длину " + MAX_MESSAGE_LENGTH
-            ));
+            send(out, ServerEvent.error(CODE_VALIDATION_ERROR, "content превышает максимальную длину " + MAX_MESSAGE_LENGTH));
             return;
         }
 
         ChatMessage normalized = new ChatMessage(msg.getRoom(), username, normalizedContent, msg.getSentAt());
-        broadcastService.broadcastExcept(clientId, ServerEvent.of("CHAT_MESSAGE", normalized));
+        broadcastService.broadcastExcept(clientId, ServerEvent.of(TYPE_CHAT_MESSAGE, normalized));
     }
 
     private void send(BufferedWriter out, ServerEvent event) throws IOException {
@@ -212,7 +219,8 @@ public class ConnectionHandler implements Runnable {
         try {
             socket.close();
         }
-        catch (IOException ignored) {
+        catch (IOException e) {
+            log.debug("Ошибка при закрытии сокета: id={} message={}", clientId, e.getMessage());
         }
     }
 }

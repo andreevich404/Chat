@@ -3,82 +3,107 @@ package org.example.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 /**
- * Фабрика подключений к базе данных (JDBC).
+ * Фабрика JDBC-подключений.
+ *
+ * <p>Назначение:</p>
+ * <ul>
+ *   <li>централизованное создание JDBC {@link Connection};</li>
+ *   <li>единое логирование SQL-ошибок;</li>
+ *   <li>использование общей конфигурации {@link DatabaseService}.</li>
+ * </ul>
+ *
+ * <p>Реализована как Singleton, так как:</p>
+ * <ul>
+ *   <li>использует единую конфигурацию БД;</li>
+ *   <li>не хранит состояния подключения;</li>
+ *   <li>должна быть общей для всех репозиториев.</li>
+ * </ul>
  */
-public class ConnectionFactoryService {
+public final class ConnectionFactoryService {
 
     private static final Logger log = LoggerFactory.getLogger(ConnectionFactoryService.class);
-    private static final ConnectionFactoryService INSTANCE = new ConnectionFactoryService();
 
     private final DatabaseService config;
 
     /**
-     * Приватный конструктор:
-     * - загружает JDBC-драйвер;
-     * - инициализирует конфигурацию БД.
+     * Приватный конструктор.
+     * Загружает конфигурацию БД.
      */
     private ConnectionFactoryService() {
         this.config = DatabaseService.load();
-        loadJdbcDriver();
-        log.info("Конфигурация базы данных загружена: jdbcUrl={}", config.getJdbcUrl());
-    }
-
-    public static ConnectionFactoryService getInstance() {
-        return INSTANCE;
+        log.info("Конфигурация БД загружена: jdbcUrl={}", config.getJdbcUrl());
     }
 
     /**
-     * Явная загрузка JDBC-драйвера.
-     * Обязательно для стабильной работы в CI и production.
+     * Lazy-инициализация singleton без синхронизации.
      */
-    private void loadJdbcDriver() {
-        try {
-            Class.forName("org.h2.Driver");
-            log.info("JDBC драйвер загружен: org.h2.Driver");
-        }
-        catch (ClassNotFoundException e) {
-            log.error("JDBC драйвер не найден в classpath", e);
-            throw new IllegalStateException("JDBC драйвер не найден", e);
-        }
+    private static final class Holder {
+        private static final ConnectionFactoryService INSTANCE = new ConnectionFactoryService();
+    }
+
+    public static ConnectionFactoryService getInstance() {
+        return Holder.INSTANCE;
     }
 
     /**
      * Создаёт новое JDBC-подключение.
+     *
+     * @throws SQLException если соединение не удалось
      */
     public Connection getConnection() throws SQLException {
         try {
-            return DriverManager.getConnection(config.getJdbcUrl(), config.getUsername(), config.getPassword());
+            return DriverManager.getConnection(
+                    config.getJdbcUrl(),
+                    config.getUsername(),
+                    config.getPassword()
+            );
         }
         catch (SQLException e) {
-            logSqlError("Ошибка при создании подключения к базе данных", e);
+            logSqlError("Ошибка при создании подключения к БД", e);
             throw e;
         }
     }
 
     /**
-     * Проверяет доступность БД.
+     * Проверяет доступность базы данных.
+     *
+     * @return true — если соединение и тестовый запрос успешны
      */
     public boolean testConnection() {
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement("SELECT 1");
              ResultSet rs = ps.executeQuery()) {
 
-            if (rs.next()) {
-                log.info("Тест соединения с БД успешен");
-                return true;
+            boolean ok = rs.next();
+            if (ok) {
+                log.info("Тест соединения с БД прошёл успешно");
             }
-            return false;
+            else {
+                log.warn("Тест соединения с БД вернул пустой результат");
+            }
+            return ok;
 
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             logSqlError("Ошибка при тесте соединения с БД", e);
             return false;
         }
     }
 
-    private void logSqlError(String msg, SQLException e) {
-        log.error("{} | SQLState={} | Код ошибки={} | Сообщение={}", msg, e.getSQLState(), e.getErrorCode(), e.getMessage());
+    private void logSqlError(String message, SQLException e) {
+        log.error(
+                "{} | SQLState={} | ErrorCode={} | Message={}",
+                message,
+                e.getSQLState(),
+                e.getErrorCode(),
+                e.getMessage()
+        );
     }
 }

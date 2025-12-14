@@ -6,6 +6,8 @@ import org.slf4j.LoggerFactory;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
@@ -16,12 +18,9 @@ import java.time.LocalDateTime;
  *
  * <p>Создаёт:</p>
  * <ul>
- *     <li>общий чат (General);</li>
- *     <li>сообщения от тестовых пользователей;</li>
+ *     <li>Общий чат (General);</li>
+ *     <li>Сообщения от тестовых пользователей;</li>
  * </ul>
- *
- * <p>Работает напрямую через JDBC, т.к. репозитории сообщений
- * будут реализованы позже.</p>
  */
 public class DevMessageSeederService {
 
@@ -45,12 +44,12 @@ public class DevMessageSeederService {
             log.info("Тестовые сообщения успешно созданы");
 
         }
-        catch (Exception e) {
+        catch (SQLException e) {
             log.error("Не удалось создать тестовые сообщения", e);
         }
     }
 
-    private long ensureGeneralChat(Connection conn) throws Exception {
+    private long ensureGeneralChat(Connection conn) throws SQLException {
 
         try (PreparedStatement ps = conn.prepareStatement(
                 "SELECT id FROM chat_room WHERE name = ?")) {
@@ -66,7 +65,7 @@ public class DevMessageSeederService {
 
         try (PreparedStatement ps = conn.prepareStatement(
                 "INSERT INTO chat_room (name, created_at) VALUES (?, ?)",
-                PreparedStatement.RETURN_GENERATED_KEYS)) {
+                Statement.RETURN_GENERATED_KEYS)) {
 
             ps.setString(1, "General");
             ps.setTimestamp(2, Timestamp.valueOf(LocalDateTime.now()));
@@ -84,7 +83,7 @@ public class DevMessageSeederService {
     }
 
     private void insertMessage(Connection conn, long chatRoomId, String username, String content)
-            throws Exception {
+            throws SQLException {
 
         Long userId = findUserId(conn, username);
         if (userId == null) {
@@ -105,7 +104,7 @@ public class DevMessageSeederService {
         }
     }
 
-    private Long findUserId(Connection conn, String username) throws Exception {
+    private Long findUserId(Connection conn, String username) throws SQLException {
         try (PreparedStatement ps = conn.prepareStatement(
                 "SELECT id FROM users WHERE username = ?")) {
 

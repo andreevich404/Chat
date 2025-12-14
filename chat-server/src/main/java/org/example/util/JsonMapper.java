@@ -17,12 +17,18 @@ import java.time.LocalDateTime;
 public final class JsonMapper {
 
     private static final Gson GSON = new GsonBuilder()
-            .registerTypeAdapter(LocalDateTime.class,
+            .registerTypeAdapter(
+                    LocalDateTime.class,
                     (JsonSerializer<LocalDateTime>) (src, typeOfSrc, context) ->
-                            src == null ? JsonNull.INSTANCE : new JsonPrimitive(src.toString()))
-            .registerTypeAdapter(LocalDateTime.class,
+                            src == null ? JsonNull.INSTANCE : new JsonPrimitive(src.toString())
+            )
+            .registerTypeAdapter(
+                    LocalDateTime.class,
                     (JsonDeserializer<LocalDateTime>) (json, typeOfT, context) ->
-                            (json == null || json.isJsonNull()) ? null : LocalDateTime.parse(json.getAsString()))
+                            (json == null || json.isJsonNull())
+                                    ? null
+                                    : LocalDateTime.parse(json.getAsString())
+            )
             .create();
 
     private static final Type JSON_OBJECT_TYPE = new TypeToken<JsonObject>() {}.getType();
@@ -71,21 +77,6 @@ public final class JsonMapper {
     /**
      * Результат разбора envelope.
      */
-    public static final class ParsedEnvelope {
-        private final String type;
-        private final JsonElement data;
-
-        public ParsedEnvelope(String type, JsonElement data) {
-            this.type = type;
-            this.data = data;
-        }
-
-        public String getType() {
-            return type;
-        }
-
-        public JsonElement getData() {
-            return data;
-        }
+    public record ParsedEnvelope(String type, JsonElement data) {
     }
 }
