@@ -3,14 +3,7 @@ package org.example;
 import org.example.model.PasswordHasher;
 import org.example.repository.JdbcUserRepository;
 import org.example.repository.UserRepository;
-import org.example.service.AuthService;
-import org.example.service.ConfigLoaderService;
-import org.example.service.ConnectionFactoryService;
-import org.example.service.ConnectionHandler;
-import org.example.service.DatabaseInitService;
-import org.example.service.DevMessageSeederService;
-import org.example.service.DevUserSeederService;
-import org.example.service.Pbkdf2PasswordHasher;
+import org.example.service.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,6 +52,7 @@ public class ChatServer {
         UserRepository userRepository = new JdbcUserRepository(connectionFactory);
         PasswordHasher passwordHasher = new Pbkdf2PasswordHasher();
         AuthService authService = new AuthService(userRepository, passwordHasher);
+
         try {
             DatabaseInitService initService = new DatabaseInitService(connectionFactory);
 
@@ -75,6 +69,7 @@ public class ChatServer {
             return;
         }
 
+        MessageBroadcastService broadcastService = new MessageBroadcastService();
         ExecutorService clientPool = Executors.newCachedThreadPool();
 
         try (ServerSocket serverSocket = new ServerSocket(port, 50, InetAddress.getByName(host))) {
@@ -97,7 +92,7 @@ public class ChatServer {
 
                     log.info("Клиент подключен: id={} remote={}", clientId, clientSocket.getRemoteSocketAddress());
 
-                    clientPool.submit(new ConnectionHandler(clientId, clientSocket, authService));
+                    clientPool.submit(new ConnectionHandler(clientId, clientSocket, authService, broadcastService));
                 }
                 catch (IOException e) {
                     if (serverSocket.isClosed()) {
