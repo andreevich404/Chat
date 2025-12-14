@@ -1,5 +1,7 @@
 package org.example.service;
 
+import org.example.model.PasswordHasher;
+
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import java.security.SecureRandom;

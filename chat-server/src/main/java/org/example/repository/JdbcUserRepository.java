@@ -7,18 +7,54 @@ import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
+/**
+ * JDBC-реализация {@link UserRepository} для работы с таблицей {@code users}.
+ *
+ * <p>Класс предоставляет методы доступа к данным пользователей через JDBC,
+ * используя {@link ConnectionFactoryService} для получения соединений.</p>
+ *
+ * <p>Особенности реализации:</p>
+ * <ul>
+ *     <li>Используются {@link PreparedStatement} для защиты от SQL-инъекций;</li>
+ *     <li>Результаты запросов преобразуются в доменную модель {@link User};</li>
+ *     <li>При возникновении {@link SQLException} выбрасывается {@link DatabaseException};</li>
+ *     <li>Метод {@link #save(User)} выбирает {@code INSERT} или {@code UPDATE}
+ *         в зависимости от наличия {@code id} у пользователя.</li>
+ * </ul>
+ *
+ * <p>Логирование SQL-ошибок рекомендуется выполнять в одном месте (в слое репозитория
+ * или в фабрике соединений), чтобы исключения логировались ровно один раз.</p>
+ */
 public class JdbcUserRepository implements UserRepository {
 
+    /**
+     * Фабрика соединений с базой данных.
+     */
     private final ConnectionFactoryService connectionFactory;
 
+    /**
+     * Создаёт репозиторий с указанной фабрикой соединений.
+     *
+     * @param connectionFactory фабрика соединений
+     */
     public JdbcUserRepository(ConnectionFactoryService connectionFactory) {
         this.connectionFactory = connectionFactory;
     }
 
+    /**
+     * Создаёт репозиторий, используя singleton-экземпляр {@link ConnectionFactoryService}.
+     */
     public JdbcUserRepository() {
         this(ConnectionFactoryService.getInstance());
     }
 
+    /**
+     * Ищет пользователя по имени.
+     *
+     * @param username имя пользователя
+     * @return {@link Optional} с пользователем, если найден, иначе пустой {@link Optional}
+     * @throws DatabaseException при ошибке обращения к базе данных
+     */
     @Override
     public Optional<User> findByUsername(String username) {
         String sql = "SELECT id, username, password_hash, created_at FROM users WHERE username = ?";
@@ -38,17 +74,22 @@ public class JdbcUserRepository implements UserRepository {
 
                     User user = new User(id, uname, passwordHash, createdAt);
                     return Optional.of(user);
-                }
-                else {
+                } else {
                     return Optional.empty();
                 }
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new DatabaseException("Ошибка при поиске пользователя по имени: " + username, e);
         }
     }
 
+    /**
+     * Проверяет существование пользователя по имени.
+     *
+     * @param username имя пользователя
+     * @return {@code true}, если пользователь существует, иначе {@code false}
+     * @throws DatabaseException при ошибке обращения к базе данных
+     */
     @Override
     public boolean existsByUsername(String username) {
         String sql = "SELECT 1 FROM users WHERE username = ?";
@@ -61,22 +102,39 @@ public class JdbcUserRepository implements UserRepository {
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next();
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new DatabaseException("Ошибка при проверке существования пользователя по имени: " + username, e);
         }
     }
 
+    /**
+     * Сохраняет пользователя в базе данных.
+     *
+     * <p>Если у пользователя отсутствует {@code id}, выполняется вставка (INSERT),
+     * иначе выполняется обновление (UPDATE).</p>
+     *
+     * @param user пользователь для сохранения
+     * @throws DatabaseException при ошибке обращения к базе данных
+     */
     @Override
     public void save(User user) {
         if (user.getId() == null) {
             insert(user);
-        }
-        else {
+        } else {
             update(user);
         }
     }
 
+    /**
+     * Выполняет вставку нового пользователя в таблицу {@code users}.
+     *
+     * <p>Если {@code createdAt} не задан, он устанавливается в текущее время.</p>
+     * <p>После успешной вставки идентификатор пользователя считывается через
+     * {@link PreparedStatement#getGeneratedKeys()} и устанавливается в объект {@link User}.</p>
+     *
+     * @param user пользователь
+     * @throws DatabaseException при ошибке вставки или отсутствии сгенерированного ID
+     */
     private void insert(User user) {
         String sql = "INSERT INTO users (username, password_hash, created_at) VALUES (?, ?, ?)";
 
@@ -102,17 +160,23 @@ public class JdbcUserRepository implements UserRepository {
                 if (keys.next()) {
                     long id = keys.getLong(1);
                     user.setId(id);
-                }
-                else {
+                } else {
                     throw new DatabaseException("Ошибка при добавлении пользователя, не было получено ID", null);
                 }
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new DatabaseException("Ошибка при добавлении пользователя с именем: " + user.getUsername(), e);
         }
     }
 
+    /**
+     * Выполняет обновление существующего пользователя в таблице {@code users}.
+     *
+     * <p>Если {@code createdAt} не задан, он устанавливается в текущее время.</p>
+     *
+     * @param user пользователь
+     * @throws DatabaseException при ошибке обновления или отсутствии изменённых строк
+     */
     private void update(User user) {
         String sql = "UPDATE users SET username = ?, password_hash = ?, created_at = ? WHERE id = ?";
 
@@ -134,8 +198,7 @@ public class JdbcUserRepository implements UserRepository {
             if (affected == 0) {
                 throw new DatabaseException("Ошибка при обновлении пользователя, не было изменений (id=" + user.getId() + ")", null);
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new DatabaseException("Ошибка при обновлении пользователя с id: " + user.getId(), e);
         }
     }
