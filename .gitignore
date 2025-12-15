@@ -30,5 +30,5 @@ target/
 Thumbs.db
 ehthumbs.db
 
-/chat-server/data/
-/chat-server/logs/
+data/
+logs/
