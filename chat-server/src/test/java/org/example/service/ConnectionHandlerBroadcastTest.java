@@ -1,11 +1,15 @@
 package org.example.service;
 
-import org.example.model.AuthRequest;
-import org.example.model.ChatMessage;
-import org.example.model.ServerEvent;
-import org.example.model.PasswordHasher;
+import org.example.model.protocol.AuthRequest;
+import org.example.model.domain.ChatMessage;
+import org.example.model.protocol.ServerEvent;
+import org.example.service.security.PasswordHasher;
 import org.example.repository.InMemoryUserRepository;
 import org.example.repository.UserRepository;
+import org.example.service.auth.AuthService;
+import org.example.service.net.ConnectionHandler;
+import org.example.service.net.MessageBroadcastService;
+import org.example.service.security.Pbkdf2PasswordHasher;
 import org.example.util.JsonUtil;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;

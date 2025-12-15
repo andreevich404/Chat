@@ -1,4 +1,4 @@
-package org.example.model;
+package org.example.model.protocol;
 
 /**
  * DTO уведомлений о присутствии пользователей (joined/left) + onlineCount.

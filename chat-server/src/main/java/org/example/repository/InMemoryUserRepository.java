@@ -1,86 +1,81 @@
 package org.example.repository;
 
-import org.example.model.User;
+import org.example.model.domain.User;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * In-memory реализация {@link UserRepository}.
- *
- * <p>Используется преимущественно в модульных тестах и сценариях,
- * где подключение к реальной базе данных не требуется.</p>
- *
- * <p>Особенности реализации:</p>
- * <ul>
- *     <li>Хранение пользователей осуществляется в памяти приложения
- *     с использованием {@link ConcurrentHashMap};</li>
- *     <li>Идентификаторы пользователей генерируются автоматически
- *     с помощью {@link AtomicLong};</li>
- *     <li>Класс является потокобезопасным и может использоваться
- *     в многопоточных тестах;</li>
- *     <li>Не выполняет логирование и не выбрасывает {@link DatabaseException},
- *     так как не взаимодействует с внешними ресурсами.</li>
- * </ul>
- *
- * <p>Данная реализация полностью соответствует контракту {@link UserRepository},
- * но не предназначена для использования в production-среде.</p>
  */
 public class InMemoryUserRepository implements UserRepository {
 
-    /**
-     * Хранилище пользователей, где ключом является имя пользователя.
-     */
-    private final Map<String, User> storage = new ConcurrentHashMap<>();
+    private final Map<String, User> usersByUsername = new ConcurrentHashMap<>();
+    private final AtomicLong seq = new AtomicLong(1);
+    private final Clock clock;
 
     /**
-     * Генератор уникальных идентификаторов пользователей.
+     * Создаёт репозиторий с системным временем.
      */
-    private final AtomicLong idSequence = new AtomicLong(1L);
+    public InMemoryUserRepository() {
+        this(Clock.systemDefaultZone());
+    }
 
     /**
-     * Ищет пользователя по имени.
+     * Создаёт репозиторий с подменяемым источником времени.
      *
-     * @param username имя пользователя
-     * @return {@link Optional} с найденным пользователем или пустой {@link Optional},
-     *         если пользователь не найден
+     * @param clock источник времени
      */
+    public InMemoryUserRepository(Clock clock) {
+        this.clock = Objects.requireNonNull(clock, "clock");
+    }
+
     @Override
     public Optional<User> findByUsername(String username) {
-        return Optional.ofNullable(storage.get(username));
+        String key = normalizeLookupKey(username);
+        if (key.isEmpty()) return Optional.empty();
+        return Optional.ofNullable(usersByUsername.get(key));
     }
 
-    /**
-     * Проверяет существование пользователя с указанным именем.
-     *
-     * @param username имя пользователя
-     * @return {@code true}, если пользователь существует, иначе {@code false}
-     */
     @Override
     public boolean existsByUsername(String username) {
-        return storage.containsKey(username);
+        String key = normalizeLookupKey(username);
+        return !key.isEmpty() && usersByUsername.containsKey(key);
     }
 
-    /**
-     * Сохраняет пользователя в памяти.
-     *
-     * <p>Если идентификатор пользователя отсутствует, он будет сгенерирован автоматически.
-     * Если дата создания не задана, она будет установлена текущим временем.</p>
-     *
-     * @param user пользователь для сохранения
-     */
     @Override
     public void save(User user) {
-        if (user.getId() == null) {
-            long id = idSequence.getAndIncrement();
-            user.setId(id);
+        Objects.requireNonNull(user, "user");
+
+        String username = safeTrim(user.getUsername());
+        if (username.isEmpty()) {
+            throw new IllegalArgumentException("username не должен быть пустым");
         }
+        if (user.getPasswordHash() == null || user.getPasswordHash().isBlank()) {
+            throw new IllegalArgumentException("passwordHash не должен быть пустым");
+        }
+
         if (user.getCreatedAt() == null) {
-            user.setCreatedAt(LocalDateTime.now());
+            user.setCreatedAt(LocalDateTime.now(clock));
         }
-        storage.put(user.getUsername(), user);
+        if (user.getId() == null) {
+            user.setId(seq.getAndIncrement());
+        }
+
+        usersByUsername.put(normalizeLookupKey(username), user);
+    }
+
+    private static String normalizeLookupKey(String username) {
+        return safeTrim(username).toLowerCase(Locale.ROOT);
+    }
+
+    private static String safeTrim(String s) {
+        return s == null ? "" : s.trim();
     }
 }

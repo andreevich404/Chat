@@ -1,4 +1,4 @@
-package org.example.service;
+package org.example.service.db;
 
 import org.example.repository.DatabaseException;
 import org.h2.tools.RunScript;
@@ -20,8 +20,6 @@ public class DatabaseInitService {
     private final String initMode;
     private final boolean devMode;
 
-    private DevUserSeederService devUserSeeder;
-    private DevMessageSeederService devMessageSeeder;
 
     public DatabaseInitService(ConnectionFactoryService connectionFactory) {
         this.connectionFactory = connectionFactory;
@@ -33,14 +31,6 @@ public class DatabaseInitService {
         this.initMode = (mode == null || mode.isBlank()) ? "never" : mode.trim();
     }
 
-    public void setDevUserSeeder(DevUserSeederService devUserSeeder) {
-        this.devUserSeeder = devUserSeeder;
-    }
-
-    public void setDevMessageSeeder(DevMessageSeederService devMessageSeeder) {
-        this.devMessageSeeder = devMessageSeeder;
-    }
-
     public void init() {
         switch (initMode.toLowerCase()) {
             case "schema":
@@ -50,15 +40,6 @@ public class DatabaseInitService {
                 break;
             default:
                 throw new IllegalStateException("Неизвестное значение db.init.mode: " + initMode);
-        }
-
-        if (devMode) {
-            if (devUserSeeder != null) {
-                devUserSeeder.seed();
-            }
-            if (devMessageSeeder != null) {
-                devMessageSeeder.seed();
-            }
         }
     }
 

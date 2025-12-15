@@ -1,11 +1,13 @@
 package org.example.service;
 
-import org.example.model.ApiResponse;
-import org.example.model.AuthResponse;
-import org.example.model.PasswordHasher;
-import org.example.model.User;
+import org.example.model.protocol.ApiResponse;
+import org.example.model.protocol.AuthResponse;
+import org.example.service.security.PasswordHasher;
+import org.example.model.domain.User;
 import org.example.repository.InMemoryUserRepository;
 import org.example.repository.UserRepository;
+import org.example.service.auth.AuthService;
+import org.example.service.security.Pbkdf2PasswordHasher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

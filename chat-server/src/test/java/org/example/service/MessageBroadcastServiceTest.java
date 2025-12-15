@@ -1,6 +1,7 @@
 package org.example.service;
 
-import org.example.model.ServerEvent;
+import org.example.model.protocol.ServerEvent;
+import org.example.service.net.MessageBroadcastService;
 import org.example.util.JsonUtil;
 import org.junit.jupiter.api.Test;
 

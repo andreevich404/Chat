@@ -1,7 +1,8 @@
 package org.example.service;
 
-import org.example.model.AuthRequest;
-import org.example.model.ServerEvent;
+import org.example.model.protocol.AuthRequest;
+import org.example.model.protocol.ServerEvent;
+import org.example.model.protocol.ErrorResponse;
 import org.example.util.JsonUtil;
 import org.junit.jupiter.api.Test;
 
@@ -55,8 +56,8 @@ class JsonProtocolTest {
         assertEquals("ERROR", parsedEvent.getType());
         assertNotNull(parsedEvent.getData());
 
-        org.example.model.ErrorResponse err =
-                JsonUtil.fromJson(JsonUtil.toJson(parsedEvent.getData()), org.example.model.ErrorResponse.class);
+        ErrorResponse err =
+                JsonUtil.fromJson(JsonUtil.toJson(parsedEvent.getData()), ErrorResponse.class);
 
         assertNotNull(err);
         assertEquals("INVALID_JSON", err.getCode());

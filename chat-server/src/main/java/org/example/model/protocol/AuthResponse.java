@@ -1,4 +1,4 @@
-package org.example.model;
+package org.example.model.protocol;
 
 /**
  * DTO-класс успешного ответа авторизации или регистрации пользователя.
