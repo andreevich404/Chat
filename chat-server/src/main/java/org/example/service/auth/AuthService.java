@@ -20,13 +20,13 @@ import java.util.Optional;
  *
  * <p>Ответственность сервиса:</p>
  * <ul>
- *     <li>валидация и нормализация входных данных (username/password);</li>
- *     <li>регистрация пользователя;</li>
- *     <li>аутентификация пользователя;</li>
- *     <li>формирование унифицированного результата через {@link ApiResponse}.</li>
+ *     <li>Валидация и нормализация входных данных (username/password);</li>
+ *     <li>Регистрация пользователя;</li>
+ *     <li>Аутентификация пользователя;</li>
+ *     <li>Формирование унифицированного результата через {@link ApiResponse}.</li>
  * </ul>
  *
- * <p>Сервис не должен зависеть от транспортного слоя (socket/HTTP) и не выполняет I/O.</p>
+ * <p>Сервис не зависит от транспортного слоя (socket/HTTP) и не выполняет I/O.</p>
  */
 public class AuthService {
 
@@ -91,10 +91,11 @@ public class AuthService {
             log.info("Пользователь зарегистрирован успешно: username={}", normalizedUsername);
             return ApiResponse.ok(new AuthResponse(normalizedUsername));
 
-        } catch (DatabaseException e) {
-            // БД-ошибки логируются на уровне репозитория/SQL слоя
+        }
+        catch (DatabaseException e) {
             return ApiResponse.fail(AuthErrorCodes.DATABASE_ERROR, "Ошибка базы данных");
-        } catch (RuntimeException e) {
+        }
+        catch (RuntimeException e) {
             log.error("Неожиданная ошибка при регистрации, username={}", normalizedUsername, e);
             return ApiResponse.fail(AuthErrorCodes.INTERNAL_ERROR, "Внутренняя ошибка сервера");
         }

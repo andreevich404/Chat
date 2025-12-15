@@ -2,7 +2,6 @@ package org.example.service.auth;
 
 /**
  * Коды ошибок авторизации/регистрации.
- *
  */
 public final class AuthErrorCodes {
 

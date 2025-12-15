@@ -7,6 +7,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -77,6 +81,23 @@ public class MessageBroadcastService {
     }
 
     /**
+     * Снимок списка пользователей онлайн (уникальный, отсортированный).
+     */
+    public List<String> getOnlineUsersSnapshot() {
+        Map<String, String> uniq = new HashMap<>();
+        for (ClientConnection c : clients.values()) {
+            String u = c.username;
+            if (u == null) continue;
+            String t = u.trim();
+            if (t.isBlank()) continue;
+            uniq.put(t.toLowerCase(Locale.ROOT), t);
+        }
+        List<String> out = new ArrayList<>(uniq.values());
+        out.sort(String.CASE_INSENSITIVE_ORDER);
+        return List.copyOf(out);
+    }
+
+    /**
      * Рассылка события всем клиентам.
      *
      * @param event событие
@@ -85,7 +106,6 @@ public class MessageBroadcastService {
         String json = JsonUtil.toJson(event);
         for (ClientConnection conn : clients.values()) {
             if (!trySendOrRemove(conn, json, "broadcast")) {
-                // удаление уже выполнено
             }
         }
     }
@@ -101,7 +121,6 @@ public class MessageBroadcastService {
         for (ClientConnection conn : clients.values()) {
             if (conn.clientId == excludeClientId) continue;
             if (!trySendOrRemove(conn, json, "broadcastExcept")) {
-                // удаление уже выполнено
             }
         }
     }
@@ -149,7 +168,8 @@ public class MessageBroadcastService {
         try {
             sendRaw(conn, json);
             return true;
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             log.warn("{} не удался. Удаляем клиента: id={} username={} message={}",
                     op, conn.clientId, conn.username, e.getMessage());
             clients.remove(conn.clientId);

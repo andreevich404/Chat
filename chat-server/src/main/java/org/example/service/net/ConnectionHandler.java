@@ -20,18 +20,6 @@ import java.util.Objects;
 
 /**
  * Обработчик одного клиентского socket-соединения (transport layer).
- *
- * <p>Ответственность:</p>
- * <ul>
- *     <li>читать строковые JSON-сообщения из сокета;</li>
- *     <li>десериализовать {@link ServerEvent};</li>
- *     <li>маршрутизировать сообщения по типам (AUTH/CHAT/DM/HISTORY/LOGOUT);</li>
- *     <li>отправлять ответы и события клиентам;</li>
- *     <li>триггерить presence-события.</li>
- * </ul>
- *
- * <p>Не отвечает за бизнес-логику хранения/истории сообщений — это делегируется в
- * {@link ChatMessagingService}.</p>
  */
 public class ConnectionHandler implements Runnable {
 
@@ -54,15 +42,6 @@ public class ConnectionHandler implements Runnable {
             Protocol.LOGOUT, this::onLogout
     );
 
-    /**
-     * Создаёт обработчик клиентского подключения.
-     *
-     * @param clientId id клиента
-     * @param socket сокет клиента
-     * @param authService сервис авторизации
-     * @param chatService use-case сервис чата
-     * @param broadcastService сервис рассылки
-     */
     public ConnectionHandler(long clientId,
                              Socket socket,
                              AuthService authService,
@@ -94,14 +73,17 @@ public class ConnectionHandler implements Runnable {
                 log.info("Клиент отключился: id={} remote={}", clientId, remote);
             }
 
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             log.warn("Ошибка I/O клиента: id={} remote={} message={}", clientId, remote, e.getMessage());
             log.debug("Детали I/O: id={} remote={}", clientId, remote, e);
 
-        } catch (RuntimeException e) {
+        }
+        catch (RuntimeException e) {
             log.error("Неожиданная ошибка обработчика: id={} remote={}", clientId, remote, e);
 
-        } finally {
+        }
+        finally {
             cleanupAndBroadcastLeft();
             closeQuietly();
             log.info("Обработчик остановлен: id={} remote={}", clientId, remote);
@@ -123,8 +105,8 @@ public class ConnectionHandler implements Runnable {
     private String readLineWithTimeout(BufferedReader in) throws IOException {
         try {
             return in.readLine();
-        } catch (SocketTimeoutException timeout) {
-            // периодически просыпаемся, чтобы заметить закрытие
+        }
+        catch (SocketTimeoutException timeout) {
             return socket.isClosed() ? null : "";
         }
     }
@@ -152,7 +134,8 @@ public class ConnectionHandler implements Runnable {
                 return null;
             }
             return event;
-        } catch (RuntimeException e) {
+        }
+        catch (RuntimeException e) {
             log.warn("Неверный JSON от клиента id={} message={}", clientId, e.getMessage());
             send(out, ServerEvent.error(Protocol.INVALID_JSON, "Неверный JSON"));
             return null;
@@ -190,16 +173,12 @@ public class ConnectionHandler implements Runnable {
         this.username = auth.getUsername();
         broadcastService.bindUsername(clientId, this.username);
 
-        // 1) auth ok
         send(out, ServerEvent.of(Protocol.AUTH_RESPONSE, auth));
+        send(out, ServerEvent.of(Protocol.USERS_LIST, new UsersListEvent(broadcastService.getOnlineUsersSnapshot())));
 
-        // 2) room history
         List<ChatMessageDto> history = chatService.getRoomHistory(Protocol.DEFAULT_ROOM, Protocol.DEFAULT_HISTORY_LIMIT);
-        send(out, ServerEvent.of(Protocol.HISTORY_RESPONSE,
-                new ChatHistoryResponse("ROOM", Protocol.DEFAULT_ROOM, null, history)
-        ));
+        send(out, ServerEvent.of(Protocol.HISTORY_RESPONSE, new ChatHistoryResponse("ROOM", Protocol.DEFAULT_ROOM, null, history)));
 
-        // 3) presence
         broadcastPresence("userJoined", this.username);
     }
 
@@ -251,10 +230,8 @@ public class ConnectionHandler implements Runnable {
 
         LocalDateTime sentAt = msg.getSentAt() == null ? LocalDateTime.now() : msg.getSentAt();
 
-        // persist
         chatService.postToRoom(room, username, content, sentAt);
 
-        // broadcast
         ChatMessageDto dto = new ChatMessageDto(room, username, null, content, sentAt);
         broadcastService.broadcast(ServerEvent.of(Protocol.CHAT_MESSAGE, dto));
     }
@@ -276,10 +253,8 @@ public class ConnectionHandler implements Runnable {
 
         LocalDateTime sentAt = dm.getSentAt() == null ? LocalDateTime.now() : dm.getSentAt();
 
-        // persist
         chatService.postDirect(username, to, content, sentAt);
 
-        // deliver
         ChatMessageDto dto = new ChatMessageDto(null, username, to, content, sentAt);
         ServerEvent outEvent = ServerEvent.of(Protocol.DIRECT_MESSAGE, dto);
 
@@ -287,8 +262,6 @@ public class ConnectionHandler implements Runnable {
         if (!delivered) {
             send(out, ServerEvent.error(Protocol.USER_OFFLINE, "Пользователь не в сети: " + to));
         }
-
-        // echo sender
         broadcastService.sendToClient(clientId, outEvent);
     }
 
@@ -298,7 +271,6 @@ public class ConnectionHandler implements Runnable {
         String left = this.username;
         this.username = null;
 
-        // remove first to ensure onlineCount is "after"
         broadcastService.removeClient(clientId);
         broadcastPresence("userLeft", left);
 
@@ -357,7 +329,8 @@ public class ConnectionHandler implements Runnable {
     }
 
     private void send(BufferedWriter out, ServerEvent event) throws IOException {
-        out.write(JsonUtil.toJson(event));
+        String payload = JsonUtil.toJson(event);
+        out.write(payload);
         out.newLine();
         out.flush();
     }
@@ -374,16 +347,16 @@ public class ConnectionHandler implements Runnable {
         try {
             socket.setTcpNoDelay(true);
             socket.setSoTimeout(2000);
-        } catch (Exception ignored) {
-            // intentionally ignored
+        }
+        catch (Exception ignored) {
         }
     }
 
     private void closeQuietly() {
         try {
             socket.close();
-        } catch (IOException ignored) {
-            // intentionally ignored
+        }
+        catch (IOException ignored) {
         }
     }
 

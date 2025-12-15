@@ -49,7 +49,8 @@ public class JdbcChatRoomRepository implements ChatRoomRepository {
                 return rs.next() ? Optional.of(rs.getLong(1)) : Optional.empty();
             }
 
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             throw new DatabaseException("Ошибка поиска комнаты ROOM по имени: " + name, e);
         }
     }
@@ -64,7 +65,6 @@ public class JdbcChatRoomRepository implements ChatRoomRepository {
         Optional<Long> existing = findRoomIdByName(name);
         if (existing.isPresent()) return existing.get();
 
-        // Пытаемся создать. Если словим уникальный конфликт (гонка) — перечитаем id.
         final String insertSql = """
                 INSERT INTO chat_room (name, room_type)
                 VALUES (?, ?)
@@ -83,7 +83,8 @@ public class JdbcChatRoomRepository implements ChatRoomRepository {
             }
             throw new DatabaseException("Не удалось получить id созданной ROOM: " + name, null);
 
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             Optional<Long> after = findRoomIdByName(name);
             if (after.isPresent()) return after.get();
 
@@ -113,7 +114,8 @@ public class JdbcChatRoomRepository implements ChatRoomRepository {
             }
             throw new DatabaseException("Не удалось получить id созданной DM комнаты", null);
 
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             throw new DatabaseException("Ошибка создания DM комнаты", e);
         }
     }

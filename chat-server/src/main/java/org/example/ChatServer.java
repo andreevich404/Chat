@@ -60,13 +60,11 @@ public class ChatServer {
             return;
         }
 
-        // ---- repositories ----
         UserRepository userRepository = new JdbcUserRepository(connectionFactory);
         ChatRoomRepository chatRoomRepository = new JdbcChatRoomRepository(connectionFactory);
         DirectChatRepository directChatRepository = new JdbcDirectChatRepository(connectionFactory);
         MessageRepository messageRepository = new JdbcMessageRepository(connectionFactory);
 
-        // ---- services ----
         PasswordHasher passwordHasher = new Pbkdf2PasswordHasher();
         AuthService authService = new AuthService(userRepository, passwordHasher);
 
@@ -84,9 +82,11 @@ public class ChatServer {
             log.info("Сервер запущен и ожидает новых подключений...");
             acceptLoop(serverSocket, clientPool.get(), authService, chatService, broadcastService);
 
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             log.error("Фатальная ошибка при запуске сервера", e);
-        } finally {
+        }
+        finally {
             log.info("Сервер остановлен.");
         }
     }
@@ -106,7 +106,8 @@ public class ChatServer {
     private static ConnectionFactoryService createConnectionFactoryOrExit() {
         try {
             return ConnectionFactoryService.getInstance();
-        } catch (RuntimeException e) {
+        }
+        catch (RuntimeException e) {
             log.error("Не удалось инициализировать ConnectionFactoryService. Запуск сервера отменен.", e);
             return null;
         }
@@ -118,7 +119,8 @@ public class ChatServer {
             String mode = ConfigLoaderService.getString("db.init.mode");
             log.info("Инициализация БД завершена (режим={})", mode);
             return true;
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             log.error("Ошибка инициализации БД. Запуск сервера отменен.", e);
             return false;
         }
@@ -134,13 +136,15 @@ public class ChatServer {
             log.info("ShutdownHook: остановка сервера...");
             try {
                 clientPool.close();
-            } catch (RuntimeException e) {
+            }
+            catch (RuntimeException e) {
                 log.warn("Ошибка при остановке пула потоков (игнорируется): {}", e.getMessage());
             }
+
             try {
                 serverSocket.close();
-            } catch (IOException ignored) {
-                // ignore
+            }
+            catch (IOException ignored) {
             }
         }, "server-shutdown-hook");
     }
@@ -161,14 +165,15 @@ public class ChatServer {
                         clientId, clientSocket, authService, chatService, broadcastService
                 ));
 
-            } catch (IOException e) {
+            }
+            catch (IOException e) {
                 if (serverSocket.isClosed()) {
                     log.info("Сокет сервера закрыт. Цикл приема подключений остановлен.");
                     break;
                 }
                 log.error("Ошибка при приеме клиентского подключения", e);
-
-            } catch (RuntimeException e) {
+            }
+            catch (RuntimeException e) {
                 log.error("Неожиданная ошибка в цикле приема подключений", e);
             }
         }

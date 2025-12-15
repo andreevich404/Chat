@@ -68,8 +68,8 @@ public class JdbcUserRepository implements UserRepository {
 
                 return Optional.of(new User(id, dbUsername, passwordHash, createdAt));
             }
-
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             throw new DatabaseException("Ошибка поиска пользователя по имени: " + uname, e);
         }
     }
@@ -92,7 +92,8 @@ public class JdbcUserRepository implements UserRepository {
                 return rs.next();
             }
 
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             throw new DatabaseException("Ошибка проверки существования пользователя: " + uname, e);
         }
     }
@@ -115,7 +116,8 @@ public class JdbcUserRepository implements UserRepository {
 
         if (user.getId() == null) {
             insert(user);
-        } else {
+        }
+        else {
             update(user);
         }
     }
@@ -142,7 +144,8 @@ public class JdbcUserRepository implements UserRepository {
                 user.setId(keys.getLong(1));
             }
 
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             throw new DatabaseException("Ошибка добавления пользователя: " + user.getUsername(), e);
         }
     }
@@ -163,7 +166,8 @@ public class JdbcUserRepository implements UserRepository {
                 throw new DatabaseException("Не удалось обновить пользователя id=" + user.getId(), null);
             }
 
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             throw new DatabaseException("Ошибка обновления пользователя id=" + user.getId(), e);
         }
     }

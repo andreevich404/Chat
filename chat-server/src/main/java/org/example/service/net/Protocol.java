@@ -19,6 +19,7 @@ public final class Protocol {
     public static final String HISTORY_RESPONSE = "HISTORY_RESPONSE";
 
     public static final String USER_PRESENCE = "USER_PRESENCE";
+    public static final String USERS_LIST = "USERS_LIST";
 
     public static final String ERROR = "ERROR";
     public static final String LOGOUT = "LOGOUT";

@@ -53,7 +53,8 @@ public class JdbcMessageRepository implements MessageRepository {
                 throw new DatabaseException("Не удалось получить id созданного сообщения", null);
             }
 
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             throw new DatabaseException("Ошибка сохранения сообщения roomId=" + roomId + " senderId=" + senderId, e);
         }
     }
@@ -96,7 +97,8 @@ public class JdbcMessageRepository implements MessageRepository {
 
             return list;
 
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             throw new DatabaseException("Ошибка загрузки истории roomId=" + roomId, e);
         }
     }

@@ -2,7 +2,6 @@ package org.example.model.protocol;
 
 /**
  * DTO событий сервера для клиента.
- *
  * Единый формат всех сообщений сервера:
  * {
  *   "type": "AUTH_RESPONSE|CHAT_MESSAGE|ERROR",

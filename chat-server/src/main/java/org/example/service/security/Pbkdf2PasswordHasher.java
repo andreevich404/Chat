@@ -1,7 +1,5 @@
 package org.example.service.security;
 
-import org.example.model.PasswordHasher;
-
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import java.security.MessageDigest;
@@ -22,7 +20,6 @@ public class Pbkdf2PasswordHasher implements PasswordHasher {
     private static final String PREFIX = "pbkdf2";
     private static final String DELIM = "\\$";
 
-    // параметры по умолчанию (можно позже вынести в конфиг)
     private static final int ITERATIONS = 120_000;
     private static final int SALT_BYTES = 16;
     private static final int KEY_LENGTH_BITS = 256;
@@ -37,7 +34,7 @@ public class Pbkdf2PasswordHasher implements PasswordHasher {
     }
 
     /**
-     * Создаёт хешер с заданным генератором случайных чисел (удобно для тестов).
+     * Создаёт хешер с заданным генератором случайных чисел.
      *
      * @param random источник случайности
      */
@@ -73,7 +70,6 @@ public class Pbkdf2PasswordHasher implements PasswordHasher {
 
     private Parsed parseStoredHash(String storedHash) {
         String[] parts = storedHash.split(DELIM);
-        // ожидаем 4 части: prefix, iterations, salt, hash
         if (parts.length != 4) {
             throw new IllegalArgumentException("Неверный формат хеша пароля");
         }
@@ -84,9 +80,11 @@ public class Pbkdf2PasswordHasher implements PasswordHasher {
         int iterations;
         try {
             iterations = Integer.parseInt(parts[1]);
-        } catch (NumberFormatException e) {
+        }
+        catch (NumberFormatException e) {
             throw new IllegalArgumentException("Неверное значение iterations в хеше", e);
         }
+
         if (iterations <= 0) {
             throw new IllegalArgumentException("iterations должен быть > 0");
         }
@@ -96,11 +94,11 @@ public class Pbkdf2PasswordHasher implements PasswordHasher {
         try {
             salt = Base64.getDecoder().decode(parts[2]);
             expected = Base64.getDecoder().decode(parts[3]);
-        } catch (IllegalArgumentException e) {
+        }
+        catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Неверный Base64 в хеше", e);
         }
 
-        // длину ключа выводим из длины expected (в байтах)
         int keyLengthBits = expected.length * 8;
         if (keyLengthBits <= 0) {
             throw new IllegalArgumentException("Неверная длина ключа в хеше");
@@ -114,7 +112,8 @@ public class Pbkdf2PasswordHasher implements PasswordHasher {
             PBEKeySpec spec = new PBEKeySpec(password, salt, iterations, keyLengthBits);
             SecretKeyFactory skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
             return skf.generateSecret(spec).getEncoded();
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             throw new IllegalStateException("Ошибка PBKDF2", e);
         }
     }

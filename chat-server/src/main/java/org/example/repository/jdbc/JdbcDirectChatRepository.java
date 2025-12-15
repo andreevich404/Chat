@@ -47,7 +47,8 @@ public class JdbcDirectChatRepository implements DirectChatRepository {
                 return rs.next() ? Optional.of(rs.getLong(1)) : Optional.empty();
             }
 
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             throw new DatabaseException("Ошибка поиска DM комнаты для пары: " + p.low() + "-" + p.high(), e);
         }
     }
@@ -74,19 +75,17 @@ public class JdbcDirectChatRepository implements DirectChatRepository {
             ps.executeUpdate();
             return chatRoomId;
 
-        } catch (SQLException e) {
-            // Возможна гонка: пара уже создана другим потоком.
+        }
+        catch (SQLException e) {
             Optional<Long> existing = findDmRoomId(p.low(), p.high());
             if (existing.isPresent()) {
                 long existingRoomId = existing.get();
 
-                // best-effort: удаляем "лишнюю" созданную DM-комнату, если она не используется
                 if (existingRoomId != chatRoomId) {
                     deleteChatRoomQuietly(chatRoomId);
                 }
                 return existingRoomId;
             }
-
             throw new DatabaseException("Ошибка создания DM комнаты для пары: " + p.low() + "-" + p.high(), e);
         }
     }
@@ -97,7 +96,8 @@ public class JdbcDirectChatRepository implements DirectChatRepository {
              PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setLong(1, chatRoomId);
             ps.executeUpdate();
-        } catch (SQLException ignored) {
+        }
+        catch (SQLException ignored) {
         }
     }
 

@@ -102,7 +102,6 @@ public class DefaultChatMessagingService implements ChatMessagingService {
     }
 
     private long ensurePublicRoom(String roomName) {
-        // createRoom() уже содержит логику "создать или вернуть существующую" (включая гонки).
         return chatRoomRepository.createRoom(roomName);
     }
 
@@ -112,7 +111,6 @@ public class DefaultChatMessagingService implements ChatMessagingService {
 
         long chatRoomId = chatRoomRepository.createDirectRoom();
 
-        // JdbcDirectChatRepository уже обрабатывает гонку на паре и (best-effort) чистит лишнюю DM комнату.
         return directChatRepository.createDm(userAId, userBId, chatRoomId);
     }
 

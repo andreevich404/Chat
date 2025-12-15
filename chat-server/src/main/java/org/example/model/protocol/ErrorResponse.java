@@ -12,8 +12,6 @@ package org.example.model.protocol;
  *     <li><b>message</b> — человеко-читаемое описание ошибки.</li>
  * </ul>
  *
- * <p>Класс не содержит логики и используется исключительно
- * как контейнер данных.</p>
  */
 public class ErrorResponse {
 
