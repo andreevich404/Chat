@@ -29,3 +29,6 @@ target/
 # Windows
 Thumbs.db
 ehthumbs.db
+
+data/
+logs/
