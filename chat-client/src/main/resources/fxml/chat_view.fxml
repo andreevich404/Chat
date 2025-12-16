@@ -48,10 +48,7 @@
                                 onAction="#onExit"
                                 styleClass="btn-danger"/>
                     </HBox>
-                    <Button fx:id="backToRoomButton"
-                            text="Назад в общий чат"
-                            onAction="#onBackToRoom"
-                            styleClass="btn-secondary"/>
+
                 </HBox>
             </top>
 
@@ -62,10 +59,12 @@
                     <!-- CHAT COLUMN -->
                     <VBox styleClass="chat-main" spacing="12" HBox.hgrow="ALWAYS">
 
+                        <!-- Список сообщений занимает всё доступное место -->
                         <ListView fx:id="messagesList"
                                   styleClass="messages-list"
                                   VBox.vgrow="ALWAYS"/>
 
+                        <!-- FOOTER (высота задаёт "низ" левой колонки) -->
                         <VBox spacing="10">
                             <HBox styleClass="chat-input-row"
                                   spacing="10"
@@ -99,14 +98,18 @@
                         <Label text="Онлайн"
                                styleClass="side-title"/>
 
+                        <!-- Список пользователей занимает всё доступное место -->
                         <ListView fx:id="usersList"
                                   styleClass="users-list"
                                   VBox.vgrow="ALWAYS"/>
 
+                        <!-- Счётчик пользователей -->
                         <Label fx:id="onlineCountLabel"
                                text="Пользователей: 0"
                                styleClass="online-badge online-badge-off"/>
 
+                        <!-- SPACER: уравнивает нижнюю границу usersList с messagesList -->
+                        <!-- Должен соответствовать высоте footer слева (input-row + errorLabel) -->
                         <Region fx:id="rightFooterSpacer"
                                 managed="true"
                                 visible="false"

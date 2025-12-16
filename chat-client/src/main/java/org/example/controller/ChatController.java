@@ -1,25 +1,15 @@
 package org.example.controller;
 
-import javafx.animation.*;
+import javafx.animation.FadeTransition;
+import javafx.animation.Interpolator;
+import javafx.animation.ScaleTransition;
+import javafx.animation.SequentialTransition;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.Region;
-import org.example.ChatClientNavigator;
-import org.example.chat.ChatSession;
-import org.example.chat.actions.ChatActions;
-import org.example.chat.actions.LogoutHandler;
-import org.example.chat.messages.IncomingMessageRouter;
-import org.example.chat.messages.MessageHistoryApplier;
-import org.example.chat.messages.MessageViewModel;
-import org.example.chat.online.OnlineUsersState;
-import org.example.chat.online.OnlineUsersUpdater;
-import org.example.model.ChatHistoryResponse;
-import org.example.model.ChatMessageDto;
-import org.example.net.ClientSocketService;
-import org.example.net.events.Events;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,16 +17,24 @@ import java.util.List;
 
 /**
  * Контроллер основного окна чата.
+ *
+ * Требования:
+ * - UI обновляется только через Application Thread
+ * - список сообщений
+ * - поле ввода
+ * - список активных пользователей
+ * - индикатор соединения
+ * - кнопки выхода/деавторизации
  */
 public class ChatController {
 
     private static final Logger log = LoggerFactory.getLogger(ChatController.class);
 
     private static final String ROOM_NAME = "General";
-    private static final int HISTORY_LIMIT = 150;
 
     private static final String STYLE_CONN_ON = "conn-dot-on";
     private static final String STYLE_CONN_OFF = "conn-dot-off";
+
     private static final String STYLE_BADGE_ON = "online-badge-on";
     private static final String STYLE_BADGE_OFF = "online-badge-off";
 
@@ -54,79 +52,52 @@ public class ChatController {
 
     @FXML private Label errorLabel;
 
-    @FXML private Button backToRoomButton;
-
     private final ObservableList<String> messages = FXCollections.observableArrayList();
+    private final ObservableList<String> users = FXCollections.observableArrayList();
 
-    private ChatClientNavigator navigator;
-    private ClientSocketService socketService;
-
-    private final ChatSession session = new ChatSession();
-
-    private final OnlineUsersState usersState = new OnlineUsersState();
-    private final OnlineUsersUpdater usersUpdater = new OnlineUsersUpdater(usersState);
-
-    private final ChatActions chatActions = new ChatActions(ROOM_NAME);
-    private final LogoutHandler logoutHandler = new LogoutHandler();
-
-    private IncomingMessageRouter router;
-    private MessageHistoryApplier historyApplier;
-    private MessageViewModel formatter;
-
-    private volatile boolean connected;
-
-    public void setNavigator(ChatClientNavigator navigator) {
-        this.navigator = navigator;
-    }
-
-    public void bindSession(String username, ClientSocketService socketService) {
-        this.session.setUsername(username);
-        this.socketService = socketService;
-
-        this.router = new IncomingMessageRouter(ROOM_NAME);
-        this.historyApplier = new MessageHistoryApplier(ROOM_NAME);
-        this.formatter = new MessageViewModel(this.session.getUsername());
-
-        bindSocketListener();
-
-        runOnFx(() -> {
-            setConnected(socketService != null && socketService.isConnected());
-            switchToRoom(false);
-            requestRoomHistory();
-        });
-
-        log.info("Сессия привязана (username={}, connected={})", this.session.getUsername(), isServiceConnected());
-    }
+    private volatile boolean connected = false;
+    private volatile int onlineCount = 0;
 
     @FXML
     private void initialize() {
         messagesList.setItems(messages);
-        usersList.setItems(usersState.getUsers());
+        usersList.setItems(users);
 
         subtitleLabel.setText("Комната: " + ROOM_NAME);
-
         setConnected(false);
+        messageField.setOnAction(e -> onSend());
         hideError();
 
-        messageField.setOnAction(e -> onSend());
-        if (sendButton != null) sendButton.setOnAction(e -> onSend());
+        log.info("Окно чата инициализировано");
+    }
 
-        if (backToRoomButton != null) {
-            backToRoomButton.setVisible(false);
-            backToRoomButton.setManaged(false);
-            backToRoomButton.setOnAction(e -> onBackToRoom());
-        }
+    public void setConnected(boolean value) {
+        runOnFx(() -> {
+            this.connected = value;
 
-        usersList.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
-        usersList.setOnMouseClicked(e -> {
-            String selected = usersList.getSelectionModel().getSelectedItem();
-            if (selected == null) return;
+            if (value) {
+                setConnDotStyle(true);
+                connLabel.setText("Подключено");
+                setOnlineBadgeStyle(true);
+            } else {
+                setConnDotStyle(false);
+                connLabel.setText("Отключено");
+                setOnlineBadgeStyle(false);
+            }
+        });
+    }
 
-            String peer = safeTrim(selected);
-            if (peer.isBlank()) return;
-            if (peer.equalsIgnoreCase(session.getUsername())) return;
+    public void setUsers(List<String> usernames) {
+        runOnFx(() -> {
+            users.setAll(usernames);
+            setOnlineCountInternal(usernames.size());
+        });
+    }
 
-            openDirect(peer);
+    public void addMessage(String message) {
+        runOnFx(() -> {
+            messages.add(message);
+            messagesList.scrollTo(messages.size() - 1);
         });
     }
 
@@ -140,214 +111,58 @@ public class ChatController {
                 showError("Введите сообщение");
                 return;
             }
-            if (!isServiceConnected()) {
+
+            if (!connected) {
                 showError("Нет соединения с сервером");
                 return;
             }
 
-            try {
-                chatActions.send(session, socketService, text);
-            } catch (RuntimeException ex) {
-                showError(ex.getMessage() == null ? "Ошибка отправки" : ex.getMessage().trim());
-                return;
-            }
-
+            addMessage("Вы: " + text);
             messageField.clear();
-        });
-    }
 
-    @FXML
-    public void onBackToRoom() {
-        runOnFx(() -> {
-            switchToRoom(true);
-            requestRoomHistory();
+            log.info("Сообщение отправлено (demo): {}", text);
         });
     }
 
     @FXML
     public void onLogout() {
-        ClientSocketService svc = this.socketService;
-        if (svc != null) svc.setListener(null);
+        runOnFx(() -> {
+            hideError();
 
-        hideError();
-        messages.clear();
-        usersUpdater.reset();
-        setConnected(false);
-        session.backToRoom();
+            setConnected(false);
+            users.clear();
+            messages.clear();
+            setOnlineCountInternal(0);
 
-        if (navigator != null) navigator.showLogin();
-
-        this.socketService = null;
-        logoutHandler.logout(session, usersUpdater, svc, true);
+            log.info("Выполнена деавторизация (demo)");
+            showError("Демо: вы вышли из аккаунта");
+        });
     }
 
     @FXML
     public void onExit() {
-        ClientSocketService svc = this.socketService;
-        this.socketService = null;
-        Platform.exit();
-        if (svc != null) {
-            Thread t = new Thread(() -> {
-                try { svc.disconnect(); } catch (Exception ignored) { }
-            }, "client-disconnect");
-            t.setDaemon(true);
-            t.start();
-        }
-    }
-
-    private void bindSocketListener() {
-        if (socketService == null) return;
-
-        socketService.setListener(event -> {
-            if (event instanceof Events.Connected) {
-                runOnFx(() -> setConnected(true));
-                return;
-            }
-
-            if (event instanceof Events.Disconnected) {
-                runOnFx(() -> setConnected(false));
-                return;
-            }
-
-            if (event instanceof Events.UsersSnapshot snap) {
-                runOnFx(() -> {
-                    usersUpdater.applySnapshot(snap.users());
-                    setConnected(true);
-                    updateOnlineCount();
-                });
-                return;
-            }
-
-            if (event instanceof Events.UserJoined joined) {
-                runOnFx(() -> {
-                    usersUpdater.userJoined(joined.username(), joined.onlineCount());
-                    updateOnlineCount();
-                    setConnected(true);
-                });
-                return;
-            }
-
-            if (event instanceof Events.UserLeft left) {
-                runOnFx(() -> {
-                    usersUpdater.userLeft(left.username(), left.onlineCount());
-                    updateOnlineCount();
-                });
-                return;
-            }
-
-            if (event instanceof Events.History h) {
-                onIncomingHistory(h.response());
-                return;
-            }
-
-            if (event instanceof Events.Message m) {
-                onIncomingMessage(m.message());
-                return;
-            }
-
-            if (event instanceof Events.Error err) {
-                runOnFx(() -> {
-                    setConnected(false);
-                    showError(err.userMessage().isBlank() ? "Ошибка соединения" : err.userMessage());
-                });
-            }
-        });
-    }
-
-    private void onIncomingHistory(ChatHistoryResponse resp) {
-        if (resp == null) return;
-
         runOnFx(() -> {
-            List<String> lines = historyApplier.apply(resp, session, formatter);
-            if (lines.isEmpty()) return;
-
-            messages.clear();
-            messages.addAll(lines);
-            scrollToEnd();
+            log.info("Выход из приложения по кнопке 'Выйти'");
+            Platform.exit();
         });
     }
 
-    private void onIncomingMessage(ChatMessageDto msg) {
-        if (msg == null) return;
+    private void setOnlineCountInternal(int newCount) {
+        int prev = this.onlineCount;
+        this.onlineCount = newCount;
 
-        runOnFx(() -> {
-            if (!router.shouldDisplay(msg, session)) return;
-
-            String line = formatter.format(msg);
-            messages.add(line);
-            scrollToEnd();
-        });
-    }
-
-    private void openDirect(String peer) {
-        runOnFx(() -> {
-            session.openDirect(peer);
-
-            subtitleLabel.setText("Диалог: " + peer);
-            setBackVisible(true);
-
-            messages.clear();
-            requestDirectHistory(peer);
-        });
-    }
-
-    private void switchToRoom(boolean clearSelection) {
-        session.backToRoom();
-
-        subtitleLabel.setText("Комната: " + ROOM_NAME);
-        setBackVisible(false);
-
-        messages.clear();
-        if (clearSelection) usersList.getSelectionModel().clearSelection();
-    }
-
-    private void setBackVisible(boolean visible) {
-        if (backToRoomButton == null) return;
-        backToRoomButton.setVisible(visible);
-        backToRoomButton.setManaged(visible);
-    }
-
-    private void requestRoomHistory() {
-        if (socketService != null && socketService.isConnected()) {
-            socketService.requestRoomHistory(ROOM_NAME, HISTORY_LIMIT);
-        }
-    }
-
-    private void requestDirectHistory(String peer) {
-        if (socketService != null && socketService.isConnected()) {
-            socketService.requestDirectHistory(peer, HISTORY_LIMIT);
-        }
-    }
-
-    private boolean isServiceConnected() {
-        return socketService != null && socketService.isConnected();
-    }
-
-    private void updateOnlineCount() {
-        int newCount = usersState.getOnlineCount();
         onlineCountLabel.setText("Пользователей: " + newCount);
-        animateOnlineCountBadge();
-    }
 
-    private void setConnected(boolean value) {
-        this.connected = value;
-        if (value) {
-            setConnDotStyle(true);
-            connLabel.setText("Подключено");
-            setOnlineBadgeStyle(true);
-        } else {
-            setConnDotStyle(false);
-            connLabel.setText("Отключено");
-            setOnlineBadgeStyle(false);
+        setOnlineBadgeStyle(connected);
+
+        if (newCount != prev) {
+            animateOnlineCountBadge();
         }
-    }
-
-    private void scrollToEnd() {
-        if (!messages.isEmpty()) messagesList.scrollTo(messages.size() - 1);
     }
 
     private void setConnDotStyle(boolean isConnected) {
         if (connDot == null) return;
+
         var classes = connDot.getStyleClass();
         classes.remove(STYLE_CONN_ON);
         classes.remove(STYLE_CONN_OFF);
@@ -356,6 +171,7 @@ public class ChatController {
 
     private void setOnlineBadgeStyle(boolean isConnected) {
         if (onlineCountLabel == null) return;
+
         var classes = onlineCountLabel.getStyleClass();
         classes.remove(STYLE_BADGE_ON);
         classes.remove(STYLE_BADGE_OFF);
@@ -385,12 +201,13 @@ public class ChatController {
         fade.setAutoReverse(true);
         fade.setCycleCount(2);
 
-        new SequentialTransition(scaleUp, scaleDown).play();
+        SequentialTransition seq = new SequentialTransition(scaleUp, scaleDown);
         fade.play();
+        seq.play();
     }
 
     private void showError(String message) {
-        errorLabel.setText(message == null ? "" : message);
+        errorLabel.setText(message);
         errorLabel.setManaged(true);
         errorLabel.setVisible(true);
     }
@@ -401,10 +218,15 @@ public class ChatController {
         errorLabel.setText("");
     }
 
-    private static String safeTrim(String s) { return s == null ? "" : s.trim(); }
+    private String safeTrim(String s) {
+        return s == null ? "" : s.trim();
+    }
 
     private void runOnFx(Runnable r) {
-        if (Platform.isFxApplicationThread()) r.run();
-        else Platform.runLater(r);
+        if (Platform.isFxApplicationThread()) {
+            r.run();
+        } else {
+            Platform.runLater(r);
+        }
     }
 }

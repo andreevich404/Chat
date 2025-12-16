@@ -11,9 +11,10 @@ import org.example.service.ConfigLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-
-public class ChatClient extends Application implements ChatClientNavigator {
+/**
+ * Точка входа chat-client.
+ */
+public class ChatClient extends Application {
 
     private static final Logger log = LoggerFactory.getLogger(ChatClient.class);
 
@@ -21,19 +22,13 @@ public class ChatClient extends Application implements ChatClientNavigator {
 
     @Override
     public void start(Stage stage) throws Exception {
-        this.stage = stage;
-
-        String logsPath = ConfigLoader.getString("logs.path");
-        if (logsPath != null && !logsPath.isBlank()) {
-            System.setProperty("logs.path", logsPath);
-        }
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/chat_view.fxml"));
+        Scene scene = new Scene(loader.load(), 1100, 700);
 
         stage.setTitle("Chat Client");
-        stage.setMinWidth(920);
-        stage.setMinHeight(600);
-
-        showLogin();
-
+        stage.setMinWidth(980);
+        stage.setMinHeight(640);
+        stage.setScene(scene);
         stage.show();
         log.info("Приложение запущено");
     }
@@ -66,13 +61,7 @@ public class ChatClient extends Application implements ChatClientNavigator {
             controller.setNavigator(this);
             controller.bindSession(username, socketService);
 
-            stage.setScene(scene);
-            log.info("Открыто окно чата (username={})", username);
-        }
-        catch (IOException e) {
-            log.error("Не удалось загрузить chat_view.fxml", e);
-            throw new IllegalStateException("Ошибка загрузки окна чата", e);
-        }
+        log.info("Окно чата запущено");
     }
 
     public static void main(String[] args) {
