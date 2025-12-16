@@ -20,37 +20,50 @@
 ## ER-диаграмма
 ```mermaid
 erDiagram
-    users {
+    USERS {
         BIGINT id PK
-        VARCHAR username
-        VARCHAR password_hash
-        TIMESTAMP created_at
+        VARCHAR(100) username "NOT NULL, UNIQUE"
+        VARCHAR(255) password_hash "NOT NULL"
+        TIMESTAMP created_at "NOT NULL, DEFAULT CURRENT_TIMESTAMP"
     }
 
-    chat_rooms {
+    CHAT_ROOM {
         BIGINT id PK
-        VARCHAR name
-        TIMESTAMP created_at
+        VARCHAR(150) name "NOT NULL"
+        VARCHAR(10) room_type "NOT NULL, CHECK IN('ROOM','DM')"
+        TIMESTAMP created_at "NOT NULL, DEFAULT CURRENT_TIMESTAMP"
     }
 
-    user_chat_rooms {
-        BIGINT user_id FK
-        BIGINT chat_room_id FK
-        TIMESTAMP joined_at
+    USER_CHAT_ROOM {
+        BIGINT user_id PK, FK "NOT NULL"
+        BIGINT chat_room_id PK, FK "NOT NULL"
+        TIMESTAMP joined_at "NOT NULL, DEFAULT CURRENT_TIMESTAMP"
     }
 
-    messages {
+    DIRECT_CHAT {
+        BIGINT chat_room_id PK, FK "NOT NULL"
+        BIGINT user_low_id FK "NOT NULL"
+        BIGINT user_high_id FK "NOT NULL"
+        TIMESTAMP created_at "NOT NULL, DEFAULT CURRENT_TIMESTAMP"
+    }
+
+    MESSAGE {
         BIGINT id PK
-        BIGINT chat_room_id FK
-        BIGINT sender_id FK
-        VARCHAR content
-        TIMESTAMP sent_at
+        BIGINT chat_room_id FK "NOT NULL"
+        BIGINT sender_id FK "NOT NULL"
+        VARCHAR(1000) content "NOT NULL"
+        TIMESTAMP sent_at "NOT NULL, DEFAULT CURRENT_TIMESTAMP"
     }
 
-    users ||--o{ user_chat_rooms : "membership"
-    chat_rooms ||--o{ user_chat_rooms : "members"
-    chat_rooms ||--o{ messages : "contains"
-    users ||--o{ messages : "sends"
+    USERS     ||--o{ USER_CHAT_ROOM : "membership"
+    CHAT_ROOM ||--o{ USER_CHAT_ROOM : "members"
+
+    CHAT_ROOM ||--o{ MESSAGE        : "contains"
+    USERS     ||--o{ MESSAGE        : "sends"
+
+    CHAT_ROOM ||--|| DIRECT_CHAT    : "dm_details"
+    USERS     ||--o{ DIRECT_CHAT    : "dm_user_low"
+    USERS     ||--o{ DIRECT_CHAT    : "dm_user_high"
 ```
 
 ## Установка
