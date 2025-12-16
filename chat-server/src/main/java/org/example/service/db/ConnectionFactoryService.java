@@ -36,7 +36,7 @@ public final class ConnectionFactoryService {
      * Приватный конструктор.
      * Загружает конфигурацию БД.
      */
-    private ConnectionFactoryService() {
+    public ConnectionFactoryService() {
         this.config = DatabaseService.load();
         log.info("Конфигурация БД загружена: jdbcUrl={}", config.getJdbcUrl());
     }
