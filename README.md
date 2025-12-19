@@ -66,85 +66,82 @@ erDiagram
     USERS     ||--o{ DIRECT_CHAT    : "dm_user_high"
 ```
 
-## Установка
+## Требования
 
 Для работы с проектом необходимо установить следующие инструменты:
 
-- [Java 21+](https://www.oracle.com/java/technologies/downloads/#java21) (для компиляции и запуска приложения).
+- [Java 25+](https://www.oracle.com/java/technologies/downloads/#java21) (для компиляции и запуска приложения).
 - [Maven](https://maven.apache.org/install.html) (для управления зависимостями и сборки проекта).
+- [JavaFX](https://openjfx.io/) (подтягивается автоматически через Maven (`javafx-maven-plugin`))
 
-### Клонирование репозитория
+## Клонирование репозитория
 
 ```bash
 git clone https://github.com/andreevich404/Chat.git
 cd Chat
 ```
 
-## Сборка проекта
+## Конфигурация
 
-1. **Перейдите в директорию `chat-server` для сборки серверной части:**
+### Сервер
+
+Файл: `chat-server/src/main/resources/application.properties`
+
+Ключи:
+- `app.env=dev # dev | prod`
+- `server.port=8080`
+- `server.host=localhost`
+- `db.init.mode=schema # never | schema`
+- `jdbcUrl=jdbc:h2:./data/chat-db`
+  
+Файл: `chat-server/src/main/resources/.env`
+
+Ключи:
+- `DB_USERNAME`
+- `DB_PASSWORD`
+
+### Клиент
+
+Файл: `chat-client/src/main/resources/application.properties`
+
+Ключи:
+- `client.server.host`
+- `client.server.port`
+- `client.server.connectTimeoutMs`
+
+## Сборка и запуск
+
+### VM Options (для IntelliJ IDEA)
+
+Для клиента и сервера:
+```
+-Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8 --enable-native-access=ALL-UNNAMED
+```
+
+## Запуск сервера (chat-server)
+
+1) Перейди в модуль:
 
 ```bash
 cd chat-server
 ```
 
-2. **Запустите сборку с помощью Maven:**
+2) Запуск:
 
 ```bash
-mvn clean install
+mvn clean compile exec:java
 ```
 
-3. **Перейдите в директорию `chat-client` для сборки клиентской части:**
+## Запуск клиента (chat-client)
 
-```bash
-cd ../chat-client
-```
-
-4. **Запустите сборку с помощью Maven:**
-
-```bash
-mvn clean install
-```
-
-## Запуск приложения
-
-### Запуск серверной части
-
-1. **Перейдите в директорию `chat-server`:**
-
-```bash
-cd chat-server
-```
-
-2. **Запустите сервер:**
-
-```bash
-mvn exec:java -Dexec.mainClass="org.example.ChatServer"
-```
-
-Сервер будет слушать соединения на порту 8080 (или другом, если вы настроили).
-
-### Запуск клиентской части
-
-1. **Перейдите в директорию `chat-client`:**
+1) Перейди в модуль:
 
 ```bash
 cd chat-client
 ```
 
-2. **Запустите клиент:**
+2) Запуск:
 
 ```bash
-mvn exec:java -Dexec.mainClass="org.example.ChatClient"
-```
-
-Клиент подключится к серверу и будет готов к отправке и получению сообщений.
-
-## Конфигурация
-
-Проект использует файл **.env** для хранения конфиденциальных данных, таких как переменные окружения для подключения к серверу или базе данных. Убедитесь, что файл **.env** присутствует и содержит нужные данные:
-
-```
-SERVER_HOST=localhost
-SERVER_PORT=8080
+mvn clean compile javafx:run
 ```
