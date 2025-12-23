@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<StackPane xmlns="http://javafx.com/javafx/25"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="org.example.controller.ChatController"
+           stylesheets="@../css/app.css"
+           styleClass="bg">
+
+    <StackPane styleClass="center-wrap">
+        <padding>
+            <Insets top="24" right="24" bottom="24" left="24"/>
+        </padding>
+
+        <BorderPane fx:id="rootCard"
+                    styleClass="chat-card"
+                    maxWidth="1100"
+                    maxHeight="700">
+
+            <!-- TOP BAR -->
+            <top>
+                <HBox styleClass="chat-topbar" spacing="12" alignment="CENTER_LEFT">
+
+                    <VBox HBox.hgrow="ALWAYS" spacing="2">
+                        <Label text="Чат" styleClass="chat-title"/>
+                        <Label fx:id="subtitleLabel"
+                               text="Комната: General"
+                               styleClass="chat-subtitle"/>
+                    </VBox>
+
+                    <HBox spacing="8" styleClass="chat-status">
+                        <Region fx:id="connDot" styleClass="conn-dot conn-dot-off"/>
+                        <Label fx:id="connLabel"
+                               text="Отключено"
+                               styleClass="conn-label"/>
+                    </HBox>
+
+                    <!-- КНОПКИ -->
+                    <HBox spacing="8" alignment="CENTER_RIGHT">
+                        <Button text="Выйти из аккаунта"
+                                onAction="#onLogout"
+                                styleClass="btn-danger-secondary"/>
+
+                        <Button text="Выйти"
+                                onAction="#onExit"
+                                styleClass="btn-danger"/>
+                    </HBox>
+                    <Button fx:id="backToRoomButton"
+                            text="Назад в общий чат"
+                            onAction="#onBackToRoom"
+                            styleClass="btn-secondary"/>
+                </HBox>
+            </top>
+
+            <!-- CENTER -->
+            <center>
+                <HBox spacing="0">
+
+                    <!-- CHAT COLUMN -->
+                    <VBox styleClass="chat-main" spacing="12" HBox.hgrow="ALWAYS">
+
+                        <ListView fx:id="messagesList"
+                                  styleClass="messages-list"
+                                  VBox.vgrow="ALWAYS"/>
+
+                        <VBox spacing="10">
+                            <HBox styleClass="chat-input-row"
+                                  spacing="10"
+                                  alignment="CENTER_LEFT">
+
+                                <TextField fx:id="messageField"
+                                           promptText="Введите сообщение..."
+                                           styleClass="text-input"
+                                           HBox.hgrow="ALWAYS"/>
+
+                                <Button fx:id="sendButton"
+                                        text="Отправить"
+                                        onAction="#onSend"
+                                        styleClass="btn-primary"/>
+                            </HBox>
+
+                            <Label fx:id="errorLabel"
+                                   text=""
+                                   managed="false"
+                                   visible="false"
+                                   styleClass="error-label"/>
+                        </VBox>
+                    </VBox>
+
+                    <!-- USERS COLUMN -->
+                    <VBox styleClass="chat-side"
+                          spacing="10"
+                          minWidth="280"
+                          maxWidth="280">
+
+                        <Label text="Онлайн"
+                               styleClass="side-title"/>
+
+                        <ListView fx:id="usersList"
+                                  styleClass="users-list"
+                                  VBox.vgrow="ALWAYS"/>
+
+                        <Label fx:id="onlineCountLabel"
+                               text="Пользователей: 0"
+                               styleClass="online-badge online-badge-off"/>
+
+                        <Region fx:id="rightFooterSpacer"
+                                managed="true"
+                                visible="false"
+                                minHeight="72"
+                                prefHeight="72"
+                                maxHeight="72"/>
+                    </VBox>
+
+                </HBox>
+            </center>
+
+        </BorderPane>
+    </StackPane>
+</StackPane>

@@ -1,0 +1,326 @@
+.bg {
+    -fx-background-color:
+            radial-gradient(center 30% 20%, radius 90%, rgba(120,160,255,0.35), transparent 60%),
+            radial-gradient(center 70% 80%, radius 90%, rgba(150,120,255,0.25), transparent 60%),
+            linear-gradient(to bottom right, #0b1020, #0a0f1a);
+}
+
+.center-wrap { -fx-alignment: CENTER; }
+
+.login-card {
+    -fx-background-radius: 22;
+    -fx-border-radius: 22;
+    -fx-background-color: rgba(255,255,255,0.08);
+    -fx-border-color: rgba(255,255,255,0.14);
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.45), 28, 0.25, 0, 10);
+}
+
+/* LEFT */
+.left-panel {
+    -fx-padding: 26;
+    -fx-background-radius: 22 0 0 22;
+    -fx-border-radius: 22 0 0 22;
+    -fx-background-color: rgba(255,255,255,0.05);
+}
+
+.left-panel-content { -fx-alignment: CENTER; }
+
+.left-center {
+    -fx-alignment: CENTER_LEFT;
+    -fx-text-alignment: LEFT;
+}
+
+.left-title {
+    -fx-font-size: 24px;
+    -fx-font-weight: 800;
+    -fx-text-fill: rgba(255,255,255,0.98);
+
+    -fx-padding: 0 0 3 0;
+}
+
+.left-subtitle {
+    -fx-font-size: 13px;
+    -fx-font-weight: 700;
+    -fx-text-fill: rgba(255,255,255,0.92);
+
+    -fx-padding: 0 0 3 0;
+}
+
+/* RIGHT */
+.right-panel {
+    -fx-padding: 28 30 26 30;
+    -fx-alignment: CENTER_LEFT;
+}
+
+.form-title {
+    -fx-font-size: 18px;
+    -fx-font-weight: 800;
+    -fx-text-fill: rgba(255,255,255,0.95);
+}
+
+.error-label { -fx-text-fill: rgba(255,120,120,0.95); -fx-font-size: 12px; }
+.caps-hint   { -fx-text-fill: rgba(255,210,120,0.95); -fx-font-size: 12px; }
+
+.input-row { -fx-alignment: CENTER_LEFT; }
+
+.field-label {
+    -fx-min-width: 70;
+    -fx-pref-width: 70;
+    -fx-text-fill: rgba(255,255,255,0.80);
+    -fx-font-weight: 600;
+}
+
+/* Inputs: важно стилизовать и TextField и PasswordField */
+.text-input {
+    -fx-pref-width: 260;
+    -fx-background-color: rgba(10,14,26,0.55);
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-border-color: rgba(255,255,255,0.14);
+    -fx-border-width: 1;
+    -fx-text-fill: rgba(255,255,255,0.92);
+    -fx-prompt-text-fill: rgba(255,255,255,0.45);
+    -fx-padding: 10 12 10 12;
+}
+
+.text-input:focused {
+    -fx-border-color: rgba(140,170,255,0.60);
+    -fx-effect: dropshadow(gaussian, rgba(140,170,255,0.22), 12, 0.25, 0, 0);
+}
+
+.input-error-row .text-input {
+    -fx-border-color: rgba(255,110,110,0.75);
+    -fx-effect: dropshadow(gaussian, rgba(255,110,110,0.18), 12, 0.25, 0, 0);
+}
+
+/* Buttons row */
+.buttons-row { -fx-alignment: CENTER_LEFT; }
+
+/* Общая база кнопок: используем .button чтобы перебить дефолт */
+.button.btn-primary,
+.button.btn-secondary,
+.button.btn-github {
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-padding: 10 14 10 14;
+    -fx-font-weight: 700;
+    -fx-cursor: hand;
+    -fx-min-height: 38;
+    -fx-pref-height: 38;
+    -fx-content-display: LEFT;
+    -fx-graphic-text-gap: 8;
+}
+
+/* PRIMARY: "Войти" */
+.button.btn-primary {
+    -fx-background-color: linear-gradient(to bottom, rgba(110,150,255,0.95), rgba(80,120,240,0.95));
+    -fx-text-fill: rgba(255,255,255,0.96);
+    -fx-effect: dropshadow(gaussian, rgba(80,120,240,0.25), 14, 0.25, 0, 6);
+}
+.button.btn-primary:hover {
+    -fx-background-color: linear-gradient(to bottom, rgba(120,160,255,0.98), rgba(90,130,245,0.98));
+}
+.button.btn-primary:pressed { -fx-translate-y: 1; }
+
+/* SECONDARY: "Зарегистрироваться" */
+.button.btn-secondary {
+    -fx-background-color: rgba(255,255,255,0.10);
+    -fx-border-color: rgba(255,255,255,0.16);
+    -fx-border-width: 1;
+    -fx-text-fill: rgba(255,255,255,0.90);
+}
+.button.btn-secondary:hover { -fx-background-color: rgba(255,255,255,0.14); }
+.button.btn-secondary:pressed { -fx-translate-y: 1; }
+
+/* GITHUB: черная */
+.button.btn-github {
+    -fx-background-color: rgba(0,0,0,0.70);
+    -fx-border-color: rgba(255,255,255,0.18);
+    -fx-border-width: 1;
+    -fx-text-fill: rgba(255,255,255,0.92);
+}
+.button.btn-github:hover { -fx-background-color: rgba(0,0,0,0.78); }
+.button.btn-github:pressed { -fx-translate-y: 1; }
+
+.progress {
+    -fx-pref-width: 22;
+    -fx-pref-height: 22;
+}
+
+/* ===== CHAT WINDOW (same style language as login) ===== */
+
+.chat-card {
+    -fx-background-radius: 22;
+    -fx-border-radius: 22;
+    -fx-background-color: rgba(255,255,255,0.08);
+    -fx-border-color: rgba(255,255,255,0.14);
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.45), 28, 0.25, 0, 10);
+}
+
+.chat-topbar {
+    -fx-padding: 18 22 14 22;
+    -fx-border-color: rgba(255,255,255,0.10);
+    -fx-border-width: 0 0 1 0;
+}
+
+.chat-title {
+    -fx-font-size: 18px;
+    -fx-font-weight: 800;
+    -fx-text-fill: rgba(255,255,255,0.95);
+}
+
+.chat-subtitle {
+    -fx-font-size: 12px;
+    -fx-text-fill: rgba(255,255,255,0.68);
+}
+
+.chat-status { -fx-alignment: CENTER_RIGHT; }
+
+.conn-dot {
+    -fx-min-width: 10;
+    -fx-min-height: 10;
+    -fx-max-width: 10;
+    -fx-max-height: 10;
+    -fx-background-radius: 999;
+    -fx-border-radius: 999;
+    -fx-border-color: rgba(255,255,255,0.16);
+    -fx-border-width: 1;
+}
+
+.conn-dot-off { -fx-background-color: rgba(255,110,110,0.85); }
+.conn-dot-on  { -fx-background-color: rgba(120,255,170,0.85); }
+
+.conn-label {
+    -fx-text-fill: rgba(255,255,255,0.80);
+    -fx-font-weight: 700;
+    -fx-font-size: 12px;
+}
+
+.chat-main {
+    -fx-padding: 18 18 18 18;
+    -fx-border-color: rgba(255,255,255,0.10);
+    -fx-border-width: 0 1 0 0;
+}
+
+.chat-side {
+    -fx-padding: 18 18 18 18;
+    -fx-background-color: rgba(255,255,255,0.04);
+    -fx-background-radius: 0 22 22 0;
+    -fx-border-radius: 0 22 22 0;
+}
+
+.side-title {
+    -fx-font-size: 13px;
+    -fx-font-weight: 800;
+    -fx-text-fill: rgba(255,255,255,0.92);
+}
+
+.side-footer {
+    -fx-text-fill: rgba(255,255,255,0.68);
+    -fx-font-size: 12px;
+}
+
+/* ListViews look */
+.messages-list,
+.users-list {
+    -fx-background-color: rgba(10,14,26,0.40);
+    -fx-background-radius: 14;
+    -fx-border-radius: 14;
+    -fx-border-color: rgba(255,255,255,0.12);
+    -fx-border-width: 1;
+}
+
+.messages-list .list-cell,
+.users-list .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: rgba(255,255,255,0.90);
+    -fx-padding: 8 10 8 10;
+}
+
+.messages-list .list-cell:filled:selected,
+.users-list .list-cell:filled:selected {
+    -fx-background-color: rgba(140,170,255,0.18);
+    -fx-background-radius: 10;
+}
+
+/* Input row */
+.chat-input-row { -fx-alignment: CENTER_LEFT; }
+
+/* ===== DANGER BUTTONS ===== */
+
+.button.btn-danger,
+.button.btn-danger-secondary {
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-padding: 8 14 8 14;
+    -fx-font-weight: 700;
+    -fx-cursor: hand;
+    -fx-min-height: 36;
+}
+
+.button.btn-danger {
+    -fx-background-color: linear-gradient(
+            to bottom,
+            rgba(255,90,90,0.95),
+            rgba(220,60,60,0.95)
+    );
+    -fx-text-fill: white;
+    -fx-effect: dropshadow(gaussian, rgba(220,60,60,0.35), 14, 0.25, 0, 6);
+}
+
+.button.btn-danger:hover {
+    -fx-background-color: linear-gradient(
+            to bottom,
+            rgba(255,110,110,0.98),
+            rgba(235,75,75,0.98)
+    );
+}
+
+.button.btn-danger:pressed {
+    -fx-translate-y: 1;
+}
+
+/* Вторичная (outline) */
+.button.btn-danger-secondary {
+    -fx-background-color: rgba(255,90,90,0.10);
+    -fx-border-color: rgba(255,90,90,0.45);
+    -fx-border-width: 1;
+    -fx-text-fill: rgba(255,160,160,0.95);
+}
+
+.button.btn-danger-secondary:hover {
+    -fx-background-color: rgba(255,90,90,0.18);
+}
+
+.button.btn-danger-secondary:pressed {
+    -fx-translate-y: 1;
+}
+
+/* ===== ONLINE BADGE (Label) ===== */
+/* Делает Label визуально как кнопка (скругление, padding, жирность) и зелёным */
+.label.online-badge {
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-padding: 8 14 8 14;
+    -fx-font-weight: 700;
+    -fx-min-height: 36;
+    -fx-alignment: CENTER_LEFT;
+}
+
+/* OFF: когда connected=false (серо/выключено) */
+.label.online-badge-off {
+    -fx-background-color: rgba(255,255,255,0.10);
+    -fx-border-color: rgba(255,255,255,0.16);
+    -fx-border-width: 1;
+    -fx-text-fill: rgba(255,255,255,0.78);
+}
+
+/* ON: когда connected=true (зелёный) */
+.label.online-badge-on {
+    -fx-background-color: rgba(120,255,170,0.12);
+    -fx-border-color: rgba(120,255,170,0.45);
+    -fx-border-width: 1;
+    -fx-text-fill: rgba(120,255,170,0.95);
+}
